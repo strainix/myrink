@@ -905,7 +905,8 @@ puck 54,15 shot
   let s = 10, cssW = 600, cssH = 320, layoutReady = false;
   // rink zoom: s = sBase * zoom; view = world x at the left edge and world y at the top edge of the rink area
   let zoom = 1, sBase = 10;
-  let ox = 26, oy = 6;   // screen position of the rink's top-left corner at 100% (the canvas covers the whole board area)
+  let ox = 26, oy = 6;
+  const free = { l: 0, r: 600, t: 0, b: 320 };   // board area not covered by the floating bars   // screen position of the rink's top-left corner at 100% (the canvas covers the whole board area)
   const view = { x: 0, top: W };
   const ZOOM_MAX = 5;
   const C = {};
@@ -959,6 +960,8 @@ puck 54,15 shot
     cssW = sw; cssH = sh;
     ox = parseFloat(st.paddingLeft) + (availW - (PAD.l + L * sBase + PAD.r)) / 2 + PAD.l;
     oy = parseFloat(st.paddingTop) + (availH - (PAD.t + W * sBase + PAD.b)) / 2 + PAD.t;
+    free.l = parseFloat(st.paddingLeft); free.r = sw - parseFloat(st.paddingRight);
+    free.t = parseFloat(st.paddingTop); free.b = sh - parseFloat(st.paddingBottom);
     const dpr = window.devicePixelRatio || 1;
     canvas.style.width = cssW + 'px';
     canvas.style.height = cssH + 'px';
@@ -1266,16 +1269,21 @@ puck 54,15 shot
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
     const xRow = bottom + 6 + fs / 2;
+    // the bottom row runs right as far as the free area goes; the left column runs up and down
+    // the free area but stops above the bottom row. Neither goes under the floating bars.
+    const xMax = zoom > 1.001 ? free.r - 12 : right + 1;
+    const yMin = zoom > 1.001 ? free.t + fs : oy - 1;
+    const yMax = zoom > 1.001 ? xRow - fs - 2 : bottom + 1;
     for (let x = 0; x < COLS; x++) {
       if (x % step && !(zoom === 1 && x === 59)) continue;     // at full view also mark the last column
       const X = px(x + 0.5);
-      if (X >= ox - 1 && X <= right + 1) label(String(x), X, xRow, 'center');
+      if (X >= ox - 1 && X <= xMax) label(String(x), X, xRow, 'center');
     }
     ctx.textAlign = 'right';
     for (let y = 0; y < ROWS; y++) {
       if (y % step && !(zoom === 1 && y === 29)) continue;
       const Y = py(y + 0.5);
-      if (Y >= oy - 1 && Y <= bottom + 1) label(String(y), ox - 6, Y, 'right');
+      if (Y >= yMin && Y <= yMax) label(String(y), ox - 6, Y, 'right');
     }
   }
   function draw() {
