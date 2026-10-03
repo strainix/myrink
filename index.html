@@ -1711,36 +1711,40 @@ puck 54,15 shot
 
   // ---- previews: the board's own drawing, aimed at another canvas ----
   function cropFor(fr) {
-    let lo = 60, hi = 0;
-    const use = x => { lo = Math.min(lo, x); hi = Math.max(hi, x + 1); };
+    let lo = 60, hi = 0, ylo = 30, yhi = 0;
+    const use = (x, y) => { lo = Math.min(lo, x); hi = Math.max(hi, x + 1); ylo = Math.min(ylo, y); yhi = Math.max(yhi, y + 1); };
     fr.forEach(f => {
-      onIceIds(f).forEach(id => { if (!id.endsWith('G') && (isHome(id) || !onIceIds(f).some(isHome))) use(f.pos[id][0]); });
-      if (f.puck.at) use(f.puck.at[0]);
+      onIceIds(f).forEach(id => { if (!id.endsWith('G') && (isHome(id) || !onIceIds(f).some(isHome))) use(...f.pos[id]); });
+      if (f.puck.at) use(...f.puck.at);
     });
-    if (lo > hi) return [0, 60];
-    if (hi <= 33) return [0, 33];
-    if (lo >= 27) return [27, 60];
-    return [0, 60];
+    if (lo > hi) return [0, 60, 15];
+    const ymid = (ylo + yhi) / 2;
+    if (hi <= 33) return [0, 33, ymid];
+    if (lo >= 27) return [27, 60, ymid];
+    return [0, 60, ymid];
   }
-  function drawPreview(cv, fr, idx, tt = 0, anim = false, cropFrames) {
+  // cover: zoom so the zone fills the card width and let the rink run off the top/bottom (thumbnails)
+  function drawPreview(cv, fr, idx, tt = 0, anim = false, cropFrames, cover = false) {
     const rect = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
     const w = Math.max(1, rect.width), h = Math.max(1, rect.height);
     if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
-    const [x0, x1] = cv._crop || (cv._crop = cropFor(cropFrames || fr));
+    const [x0, x1, ymid] = cv._crop || (cv._crop = cropFor(cropFrames || fr));
     const keep = { ctx, s, cssW, cssH, frames, cur, selected, hover, playing, t, pad: { ...PAD }, previewMode };
     try {
       ctx = cv.getContext('2d'); previewMode = true;
       Object.assign(PAD, { l: 0, r: 0, t: 0, b: 0 });
       const pad = 6;
-      s = Math.min((w - pad * 2) / (x1 - x0), (h - pad * 2) / W);
+      s = cover ? (w - pad * 2) / (x1 - x0) : Math.min((w - pad * 2) / (x1 - x0), (h - pad * 2) / W);
       // if the card is wider than the zone, show more rink (toward centre ice) instead of empty margins
       const vw = Math.min(L, (w - pad * 2) / s);
       const left = Math.max(0, Math.min(x0 - (vw - (x1 - x0)) / 2, L - vw));
+      const vh = (h - pad * 2) / s;                       // metres of rink that fit vertically
+      const top = vh >= W ? null : Math.max(vh, Math.min(W, ymid + vh / 2));   // world y at the card's top edge
       cssW = w; cssH = h;
       frames = fr; cur = idx; selected = null; hover = null; playing = anim; t = tt;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
-      ctx.translate((w - vw * s) / 2 - left * s, (h - W * s) / 2);
+      ctx.translate((w - vw * s) / 2 - left * s, top === null ? (h - W * s) / 2 : pad - (W - top) * s);
       const x0r = left;
       cssW = w + x0r * s * 2; cssH = h + 40;   // clearRect inside draw() covers the shifted area
       draw();
@@ -1813,7 +1817,7 @@ puck 54,15 shot
       card.addEventListener('click', () => { lib.view = 'detail'; lib.id = play.id; renderLibrary(); libEl.scrollTop = 0; });
       fetchScript(play).then(sc => {
         if (!card.isConnected) return;
-        drawPreview(card.querySelector('canvas'), sc.frames, 0, 0, false, sc.frames.slice(0, 2));
+        drawPreview(card.querySelector('canvas'), sc.frames, 0, 0, false, sc.frames.slice(0, 2), true);
         const meta = card.querySelector('[data-meta]');
         meta.textContent = [lib.cat === 'all' ? catTitle(play.category) : '', sc.frames.length + ' frames'].filter(Boolean).join(' · ');
       }).catch(() => {});
@@ -1898,7 +1902,7 @@ puck 54,15 shot
   new ResizeObserver(() => { if (isOpen($('library')) && lib.view === 'list') libEl.querySelectorAll('.lib-card').forEach(card => {
     const play = lib.data && lib.data.plays.find(p => p.id === card.dataset.id);
     const sc = play && lib.scripts[play.id];
-    if (sc) sc.then(x => drawPreview(card.querySelector('canvas'), x.frames, 0, 0, false, x.frames.slice(0, 2))).catch(() => {});
+    if (sc) sc.then(x => drawPreview(card.querySelector('canvas'), x.frames, 0, 0, false, x.frames.slice(0, 2), true)).catch(() => {});
   }); }).observe(libEl);
 
   // ---------- Players on ice ----------
