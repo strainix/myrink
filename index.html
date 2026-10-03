@@ -1463,7 +1463,8 @@ puck 54,15 shot
     }
     if (pointers.size > 2 || pinch) return;
     ignoreRest = false;
-    if (playing) return;
+    // during playback nothing can be edited, but a drag anywhere moves the zoomed view
+    if (playing) { if (zoom > 1) { pan = { x: e.clientX, y: e.clientY, moved: false }; capture(e); } return; }
     const w = pointerWorld(e);
     const now = performance.now();
     const dbl = now - lastTap.t < 330 && Math.hypot(w[0] - lastTap.w[0], w[1] - lastTap.w[1]) < 1;
