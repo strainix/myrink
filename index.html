@@ -74,6 +74,8 @@ body {
   height: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 0;
+  grid-template-rows: minmax(0, 100%);
+  overflow: hidden;
   transition: grid-template-columns 0.22s ease;
 }
 .app.drawer-open { grid-template-columns: minmax(0, 1fr) min(440px, 40vw); }
@@ -208,7 +210,7 @@ select, input[type="text"], input[type="number"] {
 
 /* ---------- Drawer ---------- */
 .drawer {
-  grid-column: 2;
+  grid-column: 2; min-height: 0;
   background: var(--panel); border-left: 1px solid var(--line);
   display: flex; flex-direction: column; min-width: 0; overflow: hidden;
 }
@@ -230,7 +232,7 @@ select, input[type="text"], input[type="number"] {
 h2 { font: 700 1.2rem/1 var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; margin: 0; }
 .status { font: 500 12px var(--font-mono); color: var(--muted); }
 .status.dirty { color: var(--warn); }
-.drawer-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 12px 16px 16px; }
+.drawer-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 12px 16px 16px; overflow-y: auto; overscroll-behavior: contain; }
 textarea#script {
   flex: 1; min-height: 180px; width: 100%; resize: none;
   font: 13px/1.55 var(--font-mono); color: var(--fg); background: var(--bg);
@@ -813,7 +815,13 @@ puck 54,15 shot
     const appEl = document.getElementById('app');
     // wide and short: move the floating bars to the sides
     const sw = stageEl.clientWidth, sh = stageEl.clientHeight;
-    const side = sw >= 640 && sh < 760 && sw / sh >= 2.1;
+    // pick the layout that gives the bigger rink (with a 10% margin so it doesn't flip back and forth)
+    const wasSide = appEl.classList.contains('side');
+    const rightW = sh > 560 ? 160 : 62;                                  // right column, with or without legend
+    const sSide = Math.min((sw - 200 - rightW - 24 - 32) / 60, (sh - 24 - 28) / 30);
+    const barH = Math.min(1100, sw - 32) >= 900 ? 49 : 90;               // bottom bar: one row or two
+    const sBottom = Math.min((sw - 32 - 32) / 60, (sh - 68 - barH - 40 - 28) / 30);
+    const side = sw >= 560 && (wasSide ? sSide >= sBottom * 0.9 : sSide > sBottom * 1.1);
     if (appEl.classList.contains('side') !== side) appEl.classList.toggle('side', side);
     stageEl.style.padding = '';
     if (side) {
