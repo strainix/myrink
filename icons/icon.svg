@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<rect width="512" height="512" rx="112" fill="#d52b1e"/>
+<defs><clipPath id="r"><rect x="51.2" y="153.6" width="409.6" height="204.8" rx="58.0"/></clipPath></defs>
+<rect x="51.2" y="153.6" width="409.6" height="204.8" rx="58.0" fill="#ffffff"/>
+<g clip-path="url(#r)">
+  <g stroke="#0d5cab" stroke-opacity="0.16" stroke-width="1.00"><line x1="85.3" y1="153.6" x2="85.3" y2="358.4"/><line x1="119.5" y1="153.6" x2="119.5" y2="358.4"/><line x1="153.6" y1="153.6" x2="153.6" y2="358.4"/><line x1="187.7" y1="153.6" x2="187.7" y2="358.4"/><line x1="221.9" y1="153.6" x2="221.9" y2="358.4"/><line x1="256.0" y1="153.6" x2="256.0" y2="358.4"/><line x1="290.1" y1="153.6" x2="290.1" y2="358.4"/><line x1="324.3" y1="153.6" x2="324.3" y2="358.4"/><line x1="358.4" y1="153.6" x2="358.4" y2="358.4"/><line x1="392.5" y1="153.6" x2="392.5" y2="358.4"/><line x1="426.7" y1="153.6" x2="426.7" y2="358.4"/><line x1="51.2" y1="187.7" x2="460.8" y2="187.7"/><line x1="51.2" y1="221.9" x2="460.8" y2="221.9"/><line x1="51.2" y1="256.0" x2="460.8" y2="256.0"/><line x1="51.2" y1="290.1" x2="460.8" y2="290.1"/><line x1="51.2" y1="324.3" x2="460.8" y2="324.3"/></g>
+  <rect x="192.7" y="153.6" width="8.2" height="204.8" fill="#0d5cab"/>
+  <rect x="311.1" y="153.6" width="8.2" height="204.8" fill="#0d5cab"/>
+  <rect x="251.9" y="153.6" width="8.2" height="204.8" fill="#c8102e"/>
+  <rect x="76.8" y="153.6" width="3.4" height="204.8" fill="#c8102e"/>
+  <rect x="431.8" y="153.6" width="3.4" height="204.8" fill="#c8102e"/>
+  <circle cx="256.0" cy="256.0" r="30.7" fill="none" stroke="#0d5cab" stroke-width="3.4"/>
+  <path d="M139.9 290.1 Q215.0 331.1 300.4 286.7" fill="none" stroke="#16232f" stroke-width="5.1" stroke-linecap="round"/>
+  <path d="M279.9 277.8 L305.2 284.0 L292.9 306.5" fill="none" stroke="#16232f" stroke-width="5.1" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="126.3" cy="283.3" r="16.4" fill="#d52b1e" stroke="#fff" stroke-width="2.7"/>
+  <circle cx="351.6" cy="235.5" r="16.4" fill="#1d3a5c" stroke="#fff" stroke-width="2.7"/>
+  <circle cx="228.7" cy="221.9" r="6.8" fill="#0b0b0b"/>
+</g>
+<rect x="51.2" y="153.6" width="409.6" height="204.8" rx="58.0" fill="none" stroke="#1b2a38" stroke-width="4.8"/>
+</svg>
