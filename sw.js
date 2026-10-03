@@ -1,6 +1,6 @@
 // myrink service worker: makes the app open offline.
 // Bump VERSION whenever you deploy a change so installed apps pick it up.
-const VERSION = 'v23';
+const VERSION = 'v24';
 const SHELL = `myrink-shell-${VERSION}`;
 const FONTS = 'myrink-fonts';
 const LIBRARY = 'myrink-library';
