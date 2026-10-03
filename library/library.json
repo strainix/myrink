@@ -6,7 +6,37 @@
     {
       "id": "breakouts",
       "title": "Breakouts",
-      "description": "Getting the puck out of the defensive zone under different forechecks."
+      "description": "Getting the puck out of your own zone against different forechecks."
+    },
+    {
+      "id": "forecheck",
+      "title": "Forecheck",
+      "description": "Pressure in the opponent's zone to win the puck back or force a bad exit."
+    },
+    {
+      "id": "neutral-zone",
+      "title": "Neutral zone",
+      "description": "Trapping the opponent's attack, and regrouping with speed when you have the puck."
+    },
+    {
+      "id": "offensive-zone",
+      "title": "Offensive zone",
+      "description": "Keeping possession in the attacking zone and turning it into shots with traffic."
+    },
+    {
+      "id": "power-play",
+      "title": "Power play",
+      "description": "5-on-4 setups. The player in the penalty box is simply not in the script."
+    },
+    {
+      "id": "penalty-kill",
+      "title": "Penalty kill",
+      "description": "4-on-5 shapes that protect the middle and clear the puck."
+    },
+    {
+      "id": "faceoffs",
+      "title": "Faceoffs",
+      "description": "Set plays off the draw in both zones."
     }
   ],
   "plays": [
@@ -105,6 +135,175 @@
         "d activation"
       ],
       "file": "plays/breakouts/08-five-man-d-activation.txt"
+    },
+    {
+      "id": "forecheck-2-1-2",
+      "category": "forecheck",
+      "title": "2-1-2 aggressive",
+      "strength": "5v5",
+      "when": "Chasing a goal, after an icing, or against slow D. Two deep, one high, D pinch.",
+      "tags": [
+        "pressure",
+        "pinch",
+        "turnover"
+      ],
+      "file": "plays/forecheck/01-2-1-2-aggressive.txt"
+    },
+    {
+      "id": "forecheck-1-2-2",
+      "category": "forecheck",
+      "title": "1-2-2 contain",
+      "strength": "5v5",
+      "when": "Protecting a lead or against fast teams. F1 angles, F2 jumps the wall pass.",
+      "tags": [
+        "contain",
+        "angling",
+        "wall"
+      ],
+      "file": "plays/forecheck/02-1-2-2-contain.txt"
+    },
+    {
+      "id": "nz-1-2-2-trap",
+      "category": "neutral-zone",
+      "title": "1-2-2 trap",
+      "strength": "5v5",
+      "when": "Slow a fast team down: steer the carrier to the boards and close the trap at the red line.",
+      "tags": [
+        "trap",
+        "turnover",
+        "counter"
+      ],
+      "file": "plays/neutral-zone/01-1-2-2-trap.txt"
+    },
+    {
+      "id": "nz-regroup-swing",
+      "category": "neutral-zone",
+      "title": "Regroup with swings",
+      "strength": "5v5",
+      "when": "The neutral zone is clogged: D-to-D while the forwards curl back, then attack with speed.",
+      "tags": [
+        "regroup",
+        "d-to-d",
+        "speed"
+      ],
+      "file": "plays/neutral-zone/02-regroup-swing.txt"
+    },
+    {
+      "id": "oz-low-cycle",
+      "category": "offensive-zone",
+      "title": "Low cycle",
+      "strength": "5v5",
+      "when": "Possession low: protect, leave it for the next man, loop, and hit the slot when they collapse.",
+      "tags": [
+        "cycle",
+        "possession",
+        "slot"
+      ],
+      "file": "plays/offensive-zone/01-low-cycle.txt"
+    },
+    {
+      "id": "oz-low-to-high",
+      "category": "offensive-zone",
+      "title": "Low to high, point shot",
+      "strength": "5v5",
+      "when": "The defence sinks low: move it to the point, walk the line and shoot through a screen.",
+      "tags": [
+        "point shot",
+        "screen",
+        "rebound"
+      ],
+      "file": "plays/offensive-zone/02-low-to-high-screen.txt"
+    },
+    {
+      "id": "pp-1-3-1",
+      "category": "power-play",
+      "title": "1-3-1",
+      "strength": "5v4",
+      "when": "Shooters on both flanks and a strong bumper. Includes a bank pass to the goal line.",
+      "tags": [
+        "1-3-1",
+        "bumper",
+        "bank pass"
+      ],
+      "file": "plays/power-play/01-1-3-1.txt"
+    },
+    {
+      "id": "pp-umbrella",
+      "category": "power-play",
+      "title": "Umbrella",
+      "strength": "5v4",
+      "when": "A big shot up top: move it high and across quickly, one-timer from the far flank.",
+      "tags": [
+        "umbrella",
+        "one-timer",
+        "point"
+      ],
+      "file": "plays/power-play/02-umbrella.txt"
+    },
+    {
+      "id": "pk-box",
+      "category": "penalty-kill",
+      "title": "Box",
+      "strength": "4v5",
+      "when": "The default kill. The box shifts with the puck, then block and clear.",
+      "tags": [
+        "box",
+        "clear",
+        "block"
+      ],
+      "file": "plays/penalty-kill/01-box.txt"
+    },
+    {
+      "id": "pk-diamond",
+      "category": "penalty-kill",
+      "title": "Diamond",
+      "strength": "4v5",
+      "when": "Against an umbrella (three high, two low). Whoever the puck comes to steps out.",
+      "tags": [
+        "diamond",
+        "rotation",
+        "clear"
+      ],
+      "file": "plays/penalty-kill/02-diamond.txt"
+    },
+    {
+      "id": "fo-oz-point",
+      "category": "faceoffs",
+      "title": "O-zone win to the point",
+      "strength": "5v5",
+      "when": "Win it back, the D walks into the lane and shoots, wingers screen and crash.",
+      "tags": [
+        "offensive zone",
+        "point shot",
+        "traffic"
+      ],
+      "file": "plays/faceoffs/01-oz-win-to-point.txt"
+    },
+    {
+      "id": "fo-oz-quick-blast",
+      "category": "faceoffs",
+      "title": "Quick blast",
+      "strength": "5v5",
+      "when": "A clean draw straight back to the off-wing shooter lined up inside for a one-timer.",
+      "tags": [
+        "offensive zone",
+        "one-timer",
+        "set play"
+      ],
+      "file": "plays/faceoffs/02-oz-quick-blast.txt"
+    },
+    {
+      "id": "fo-dz-breakout",
+      "category": "faceoffs",
+      "title": "D-zone win to breakout",
+      "strength": "5v5",
+      "when": "The default D-zone faceoff: win to the corner D, winger pops for the outlet.",
+      "tags": [
+        "defensive zone",
+        "breakout",
+        "wall"
+      ],
+      "file": "plays/faceoffs/03-dz-win-breakout.txt"
     }
   ]
 }

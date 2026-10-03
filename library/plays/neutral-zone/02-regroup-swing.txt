@@ -1,0 +1,55 @@
+# NEUTRAL ZONE · REGROUP (D-to-D, forwards swing)
+# Home has the puck at its own blue line but the neutral zone is clogged.
+# The D change sides while the forwards curl back to build speed, then the
+# D hits a winger on the move and the line attacks together.
+# Use when: the opponent sits back in a 1-2-2 and there's no direct pass.
+
+frame Regroup
+HG  4,14
+HLD 24,20
+HRD 24,9
+HC  33,15
+HLW 36,24
+HRW 36,6
+AG  55,14
+AC  36,16
+ALW 40,6
+ARW 40,24
+ALD 47,10
+ARD 47,20
+puck HLD
+
+frame D to D
+HLD 25,19
+HRD 25,10
+HC  29,13 via 31,16
+HLW 31,22 via 34,25
+HRW 31,4 via 34,4
+AC  34,13
+puck HRD
+
+frame Hit the swing
+HRD 26,9
+HRW 36,5 via 31,2
+HC  33,12
+HLW 35,21 via 30,20
+ALW 39,7
+puck HRW
+
+frame Attack with speed
+HRW 44,5
+HC  43,12
+HLW 44,22
+HRD 32,9
+HLD 32,19
+ALD 49,9 back
+ARD 50,19 back
+AC  38,12
+puck HRW
+
+frame Middle drive
+HRW 47,4
+HC  50,12
+HLW 49,21
+ALD 52,7 back
+puck HC

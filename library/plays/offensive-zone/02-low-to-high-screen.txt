@@ -1,0 +1,45 @@
+# OFFENSIVE ZONE · LOW TO HIGH, POINT SHOT WITH A SCREEN
+# Home attacks right. The puck goes from low to the wall to the point while
+# a forward gets to the net front. The D walks the line to the middle to open
+# a lane and shoots through the screen; the low forward attacks the rebound.
+# Use when: the defence sinks low and leaves the points open.
+
+frame Low possession
+HG  4,14
+HC  53,4
+HRW 48,3
+HLW 49,16
+HRD 41,6
+HLD 41,22
+AG  55,14
+ALD 52,6
+AC  49,8
+ALW 44,7
+ARW 45,20
+ARD 52,14
+puck HC
+
+frame To the wall
+HRW 47,2
+HC  53,5
+puck HRW
+
+frame Up to the point
+HRD 42,5
+HRW 47,3
+HLW 52,16 via 51,17
+ALW 44,6
+puck HRD
+
+frame Walk the line
+HRD 42,10
+HLW 53,16
+HC  52,9
+ALW 45,9
+ARD 54,17
+puck HRD
+
+frame Shot through the screen
+HRD 42,11
+HC  53,11
+puck 56,15 shot

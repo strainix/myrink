@@ -1,0 +1,32 @@
+# FACEOFF · "QUICK BLAST" (win straight to the off-wing shooter)
+# Home attacks right, faceoff on the bottom dot (50,8). The right winger lines
+# up inside, at the top of the circle where a D would normally stand, on his
+# off-wing. The centre wins it straight back to him for a one-timer; the
+# centre ties up and then crashes the net.
+# Use when: you have a one-timer shooter and a centre who wins clean draws.
+
+frame Line up
+HG  4,14
+HC  49,6
+HRW 46,10
+HLW 47,3
+HRD 41,5
+HLD 41,15
+AG  55,14
+AC  51,7
+ALW 52,3
+ARW 52,12
+ALD 54,9
+ARD 54,18
+puck 50,7
+
+frame Win straight back
+HC  49,6
+AC  51,7
+puck HRW
+
+frame One-timer
+HC  52,9
+HLW 50,4
+ARW 53,10
+puck 56,15 shot

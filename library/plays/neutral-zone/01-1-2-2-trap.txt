@@ -1,0 +1,64 @@
+# NEUTRAL ZONE · 1-2-2 TRAP
+# Home defends left. F1 (HC) steers from the middle and forces the carrier to
+# one side. The wingers wait near the red line by the boards, the D at our
+# blue line. When the puck goes up the boards, winger and D close the trap
+# and the turnover turns into a counter.
+# Use when: protecting a lead or slowing down a fast team.
+
+frame Set the trap
+HG  4,14
+HC  44,14
+HLW 32,25
+HRW 32,5
+HLD 22,19
+HRD 22,10
+AG  55,14
+ALD 50,10
+ARD 50,20
+AC  46,18
+ALW 40,4
+ARW 40,26
+puck ALD
+
+frame Steer to the boards
+ALD 45,6
+HC  46,11 via 45,13
+AC  43,17
+ALW 36,3
+ARW 37,25
+HRW 34,5
+HLW 31,22
+HLD 24,17
+HRD 24,9
+puck ALD
+
+frame Pass into the trap
+ALW 33,2
+HRW 34,4
+HRD 29,4
+HC  44,9
+ALD 44,6
+puck ALW
+
+frame Trap closes
+ALW 32,2
+HRW 33,3
+HRD 31,4
+puck HRD
+
+frame Counter
+HRD 32,5
+HC  40,11 via 42,8
+HLW 39,21
+AC  40,16
+ARD 47,19 back
+ALD 47,10 back
+puck HC
+
+frame Attack
+HC  46,12
+HLW 47,20
+HRW 41,4
+ALD 51,10 back
+ARD 51,18 back
+puck HC

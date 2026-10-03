@@ -1,0 +1,40 @@
+# FACEOFF · OFFENSIVE ZONE WIN BACK TO THE POINT
+# Home attacks right, faceoff on the bottom dot (50,8). The centre wins it
+# back, the D walks into the shot lane, both wingers go to the net for the
+# screen and the rebound.
+# Use when: you have a D with a good shot and want a quick look.
+
+frame Line up
+HG  4,14
+HC  49,7
+HLW 48,12
+HRW 48,3
+HRD 41,5
+HLD 41,14
+AG  55,14
+AC  51,7
+ALW 52,3
+ARW 52,12
+ALD 54,9
+ARD 54,18
+puck 50,7
+
+frame Win
+HC  49,7
+puck HC
+
+frame Back to the point
+HRD 41,6
+HC  50,8
+AC  51,9
+HRW 50,4
+HLW 49,13
+puck HRD
+
+frame Shot with traffic
+HRD 42,7
+HRW 53,11
+HLW 51,15
+ALD 53,9
+ARW 52,16
+puck 56,15 shot

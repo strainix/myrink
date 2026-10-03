@@ -1,0 +1,56 @@
+# FORECHECK · 2-1-2 (aggressive)
+# Home attacks right. F1 (HC) attacks the puck carrier and angles him to the
+# boards, F2 (HRW) takes away the first pass up the wall, F3 (HLW) stays high
+# in the middle as the safety and outlet. The strong-side D (HRD) pinches on
+# the rim; the weak-side D (HLD) covers the middle.
+# Use when: you're chasing a goal, after an icing, or against slow D.
+
+frame Dump-in
+HG  4,14
+HC  41,14
+HRW 42,5
+HLW 41,22
+HRD 37,8
+HLD 37,20
+AG  55,14
+ALD 52,7
+ARD 52,20
+AC  47,13
+ALW 47,3
+ARW 46,25
+puck 56,4
+
+frame F1 on the puck
+ALD 56,5
+HC  52,7
+HRW 48,4
+HLW 46,14
+HRD 40,4
+HLD 40,14
+ALW 49,1
+AC  52,10
+ARD 56,19
+ARW 47,24
+puck ALD
+
+frame Rim and pinch
+HRD 45,2
+HC  54,6
+HRW 49,4
+ALW 48,1
+puck HRD
+
+frame Into the slot
+HRD 46,3
+HLW 48,12
+HC  52,10
+HRW 50,5
+AC  51,12
+ALD 55,7
+puck HLW
+
+frame Shot
+HLW 48,13
+HC  53,12
+HLD 41,16
+puck 56,15 shot

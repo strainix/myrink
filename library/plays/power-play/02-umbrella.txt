@@ -1,0 +1,48 @@
+# POWER PLAY 5-on-4 · UMBRELLA
+# Home attacks right; away's RW is in the box. One shooter high (HRD), two
+# at the tops of the circles (HLW, HRW), two low (HC on the goal line, H1 at
+# the net front). Move it high and across quickly to drag the box and the
+# goalie, then shoot from the far side.
+# Use when: you have a big shot up top and a one-timer on a flank.
+
+frame Setup
+HG  4,14
+HRD 40,15
+HLW 45,23
+HRW 45,7
+HC  53,5
+H1  53,17
+AG  55,14
+AC  45,17
+ALW 45,12
+ALD 51,11
+ARD 51,18
+puck HRD
+
+frame To the flank
+HLW 45,22
+AC  46,19
+ALW 44,14
+ARD 50,19
+ALD 51,13
+puck HLW
+
+frame Back up top
+HRD 41,15
+AC  47,21
+ALW 45,13
+puck HRD
+
+frame Across
+HRD 41,14
+HRW 46,7
+ALW 46,10
+AC  45,15
+ALD 51,8
+ARD 51,16
+puck HRW
+
+frame One-timer
+HC  53,8
+H1  54,16
+puck 56,14 shot

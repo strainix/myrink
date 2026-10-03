@@ -1,0 +1,56 @@
+# POWER PLAY 5-on-4 · 1-3-1
+# Home attacks right; away's RW is in the box, so he isn't in the script.
+# Point (HRD) up top, half-walls HLW and HRW at the dots, bumper HC in the
+# high slot, H1 is a free net-front skater. The puck moves to pull the box
+# apart, goes off the boards to the goal line, back to the bumper and in.
+# Use when: you have a shooter on each flank and a strong bumper.
+
+frame Setup
+HG  4,14
+HRD 40,15
+HLW 45,25
+HRW 45,5
+HC  48,15
+H1  54,18
+AG  55,14
+AC  45,17
+ALW 45,12
+ALD 51,11
+ARD 51,19
+puck HLW
+
+frame Point
+HRD 41,16
+HLW 46,24
+AC  46,20
+ALW 44,13
+puck HRD
+
+frame Flank
+HRD 41,15
+HRW 44,6
+ALW 46,9
+AC  44,15
+ALD 50,9
+puck HRW
+
+frame Off the boards
+HRW 45,6
+H1  54,9 via 52,12
+HC  49,13
+ALD 52,10
+ARD 51,16
+puck H1 via 50,0
+
+frame Bumper
+H1  55,8
+HC  48,14
+ALD 55,6
+AC  45,14
+puck HC
+
+frame Shot
+HC  48,13
+H1  54,12
+ARD 51,17
+puck 56,15 shot

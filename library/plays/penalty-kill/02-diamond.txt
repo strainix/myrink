@@ -1,0 +1,57 @@
+# PENALTY KILL 4-on-5 · DIAMOND (against an umbrella)
+# Home defends left; HRW is in the box. Away runs an umbrella with numbered
+# skaters A1–A5. One killer up top (HC) on the point, two on the sides
+# (HLW, HRD), one in front of the net (HLD). Whoever the puck comes to steps
+# out, the others rotate to keep the diamond.
+# Use when: the power play has three high and two low.
+
+frame Setup
+HG  4,14
+HC  15,15
+HLW 10,20
+HRD 10,10
+HLD 7,15
+AG  55,14
+A1  20,15
+A2  15,23
+A3  15,7
+A4  6,22
+A5  8,17
+puck A1
+
+frame Point to flank
+A2  15,22
+HLW 13,21
+HC  14,17
+HRD 9,12
+HLD 7,16
+puck A2
+
+frame Down low
+A2  16,22
+A4  5,21
+HLW 11,20
+HLD 6,19
+HC  12,16
+HRD 9,13
+puck A4
+
+frame Back to the point
+A4  5,22
+A1  21,15
+HC  14,14
+HLD 7,16
+HLW 11,19
+HRD 10,11
+puck A1
+
+frame Pressure and clear
+A1  21,15
+HC  19,14
+HLW 13,19
+puck HC
+
+frame Clear
+HC  20,13
+A1  22,17
+puck 42,15

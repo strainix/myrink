@@ -1,0 +1,49 @@
+# OFFENSIVE ZONE · LOW CYCLE
+# Home attacks right. F1 (HRW) wins the wall low and protects the puck,
+# leaves it for F2 (HC) dropping behind him, then loops into the space he
+# left. F3 (HLW) floats high in the slot. When the defence collapses on the
+# wall, the puck goes to the slot.
+# Use when: you have possession low and want to wear the defence down.
+
+frame Win the wall
+HG  4,14
+HRW 52,2
+HC  50,5
+HLW 47,15
+HRD 41,5
+HLD 41,22
+AG  55,14
+ALD 51,4
+AC  49,9
+ALW 44,7
+ARW 45,20
+ARD 53,12
+puck HRW
+
+frame Leave it low
+HRW 53,3
+HC  55,5 via 53,6
+ALD 52,4
+AC  50,6
+puck HC
+
+frame Loop and cycle
+HC  56,6
+HRW 50,4 via 51,2
+HLW 49,13
+ALD 57,5
+AC  51,8
+ARD 54,11
+puck HC
+
+frame To the slot
+HC  56,7
+HLW 50,12
+ARD 52,15
+ALD 55,4
+puck HLW
+
+frame Shot
+HLW 50,13
+HRW 52,7
+puck 56,15 shot

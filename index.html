@@ -257,30 +257,67 @@ details.syntax b { color: var(--fg); font-weight: 500; }
 
 /* ---------- Help modal ---------- */
 .modal-back { position: fixed; inset: 0; background: var(--scrim); z-index: 50; display: grid; place-items: center; padding: 16px; }
+@media (max-width: 600px) { #library { padding: 0; } }
 .modal { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); width: min(480px, 100%); max-height: 90%; overflow: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
 .modal-head { display: flex; justify-content: space-between; align-items: center; }
 .modal h3 { font: 600 11px var(--font-body); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 4px 0 0; }
 .modal ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
-.library-modal { width: min(560px, 100%); }
-.lib-cats { display: flex; gap: 6px; flex-wrap: wrap; }
+.library-modal { width: min(920px, 100%); height: min(88%, 860px); padding: 0; gap: 0; overflow: hidden; }
+.lib-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px 10px; }
+.lib-head h2 { flex: none; }
+.lib-search { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 0 12px; height: 36px; color: var(--muted); margin-left: 6px; }
+.lib-search svg { width: 16px; height: 16px; fill: currentColor; flex: none; }
+.lib-search input { border: 0; outline: 0; padding: 0; width: 100%; min-width: 0; background: transparent; font: 14px var(--font-body); color: var(--fg); }
+.lib-search:focus-within { border-color: var(--muted); }
+.lib-cats { display: flex; gap: 6px; overflow-x: auto; padding: 0 16px 10px; border-bottom: 1px solid var(--line); flex: none; }
 .lib-cats:empty { display: none; }
-.lib-cat { border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 999px; padding: 5px 12px; font: 500 13px var(--font-body); cursor: pointer; }
+.lib-cat { flex: none; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 999px; padding: 6px 12px; font: 500 13px var(--font-body); cursor: pointer; white-space: nowrap; }
 .lib-cat[aria-selected="true"] { background: var(--fg); border-color: var(--fg); color: var(--panel); }
-.lib-cat .n { font: 11px var(--font-mono); opacity: 0.6; margin-left: 4px; }
-.lib-desc { margin: 0; font-size: 13px; color: var(--muted); }
-.lib-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.lib-item { border: 1px solid var(--line); border-radius: 10px; }
-.lib-item[data-open="true"] { border-color: var(--muted); }
-.lib-row { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: baseline; text-align: left; background: none; border: 0; padding: 10px 12px; cursor: pointer; color: var(--fg); font: inherit; }
+.lib-cat .n { font: 11px var(--font-mono); opacity: 0.6; margin-left: 5px; }
+.lib-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 18px; overscroll-behavior: contain; }
+.lib-desc { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+.lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 12px; }
+.lib-card { display: flex; flex-direction: column; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 0; overflow: hidden; cursor: pointer; color: var(--fg); font: inherit; }
+.lib-thumb { display: block; width: 100%; aspect-ratio: 16 / 10; background: var(--bg); }
+.lib-card-body { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 12px; }
+.lib-card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .lib-title { font: 700 1.05rem/1.2 var(--font-display); letter-spacing: 0.02em; }
-.lib-strength { font: 500 11px var(--font-mono); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; }
-.lib-when { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
-.lib-detail { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0 12px 12px; }
-.lib-tag { font-size: 12px; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 2px 8px; }
-.lib-detail .btn { margin-left: auto; }
-.lib-state { font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.lib-strength { flex: none; font: 500 11px var(--font-mono); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; }
+.lib-when { font-size: 13px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lib-meta { font: 11px var(--font-mono); color: var(--muted); opacity: 0.85; margin-top: 2px; }
+@media (hover: hover) and (pointer: fine) { .lib-card:hover { border-color: var(--muted); box-shadow: var(--float-shadow); transform: translateY(-2px); } }
+.lib-card:active { transform: scale(0.985); }
+.lib-grid.stagger .lib-card { animation: rise-in var(--t-slow) var(--ease) both; animation-delay: calc(var(--i, 0) * 25ms); }
+.lib-empty, .lib-state { font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; animation: rise-in var(--t-med) var(--ease); }
 .lib-state.error { color: var(--warn); }
 .lib-note { margin: 0; font-size: 12px; color: var(--muted); }
+
+/* detail view */
+.lib-detail { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; animation: rise-in var(--t-med) var(--ease); }
+@media (max-width: 760px) { .lib-detail { grid-template-columns: minmax(0, 1fr); } }
+.lib-stage { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.lib-big { display: block; width: 100%; aspect-ratio: 16 / 10; background: var(--bg); border-radius: 10px; }
+.lib-player { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lib-player .frames-mini { display: flex; gap: 4px; flex-wrap: wrap; }
+.lib-fchip { border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; padding: 3px 8px; font: 500 12px var(--font-body); cursor: pointer; }
+.lib-fchip[aria-current="true"] { background: var(--fg); border-color: var(--fg); color: var(--panel); }
+.lib-info { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.lib-info .lib-title { font-size: 1.5rem; }
+.lib-kicker { font: 600 11px var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lib-text { margin: 0; font-size: 14px; line-height: 1.55; color: var(--fg); }
+.lib-use { margin: 0; font-size: 14px; line-height: 1.5; padding: 8px 10px; background: var(--bg); border-radius: 8px; }
+.lib-use b { font-weight: 600; }
+.lib-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.lib-tag { font-size: 12px; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 2px 8px; }
+.lib-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; margin-top: 4px; }
+@media (max-width: 600px) {
+  .lib-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .lib-card { flex-direction: row; align-items: stretch; }
+  .lib-thumb { width: 42%; flex: none; aspect-ratio: auto; min-height: 96px; }
+  .lib-card-body { min-width: 0; padding: 8px 10px; }
+  .lib-when { -webkit-line-clamp: 3; }
+}
+@media (max-width: 600px) { .library-modal { height: 100%; max-height: 100%; border-radius: 0; } #libraryTitle { display: none; } .lib-search { margin-left: 0; } }
 .lineup-note, .lineup-count { margin: 0; font-size: 13px; color: var(--muted); }
 .lineup-count { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .lineup-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -498,13 +535,15 @@ x 0–59 left → right, y 0–29 bottom → top</pre>
 </div>
 
 <div class="modal-back" id="library" hidden>
-  <div class="modal library-modal scroll-subtle" role="dialog" aria-modal="true" aria-labelledby="libraryTitle">
-    <div class="modal-head">
+  <div class="modal library-modal" role="dialog" aria-modal="true" aria-labelledby="libraryTitle">
+    <div class="lib-head">
+      <button class="btn ghost icon" id="libBack" aria-label="Back to the library" hidden><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"/></svg></button>
       <h2 id="libraryTitle">Library</h2>
+      <label class="lib-search" id="libSearchWrap"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg><input type="search" id="libSearch" placeholder="Search plays" autocomplete="off" aria-label="Search plays"></label>
       <button class="btn ghost icon" id="libraryClose" aria-label="Close"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
     </div>
-    <div class="lib-cats" id="libCats" role="tablist" aria-label="Categories"></div>
-    <div class="lib-body" id="libBody"></div>
+    <div class="lib-cats scroll-subtle" id="libCats" role="tablist" aria-label="Categories"></div>
+    <div class="lib-body scroll-subtle" id="libBody"></div>
   </div>
 </div>
 
@@ -846,7 +885,8 @@ puck 54,15 shot
 
   // ---------- Canvas ----------
   const canvas = document.getElementById('rink');
-  const ctx = canvas.getContext('2d');
+  let ctx = canvas.getContext('2d');
+  let previewMode = false;   // true while drawing a library preview: no axis labels, no handles
   const stageEl = document.getElementById('stage');
   const PAD = { l: 26, r: 6, t: 6, b: 22 };
   let s = 10, cssW = 600, cssH = 320, layoutReady = false;
@@ -972,6 +1012,7 @@ puck 54,15 shot
 
     rinkPath(); ctx.strokeStyle = C.boards; ctx.lineWidth = Math.max(1.25, 0.18 * s); ctx.stroke();
 
+    if (previewMode) return;
     ctx.fillStyle = C.muted;
     ctx.font = `${Math.max(8, Math.min(11, s * 0.75))}px "JetBrains Mono", monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
@@ -1644,86 +1685,221 @@ puck 54,15 shot
   document.addEventListener('webkitfullscreenchange', syncFsLabel);
 
   // ---------- Library ----------
-  // Plays live in a GitHub repo: library.json lists categories and plays, each play is a script file.
+  // Plays live on GitHub: library.json lists categories and plays, each play is a script file.
   const LIBRARY_BASE = window.MYRINK_LIBRARY_BASE || 'https://raw.githubusercontent.com/strainix/myrink/main/library/';
-  let library = null, libCat = null, libOpenId = null, libLoading = false, libStagger = false;
-  const libEl = $('libBody'), libCatsEl = $('libCats');
+  const lib = { data: null, loading: false, cat: 'all', query: '', view: 'list', id: null, scripts: {}, stagger: false };
+  const libEl = $('libBody'), libCatsEl = $('libCats'), libSearch = $('libSearch');
   function esc(t) { return String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
-  function libState(html, error) { libCatsEl.innerHTML = ''; libEl.innerHTML = `<div class="lib-state${error ? ' error' : ''}">${html}</div>`; }
+  function libState(html, error) { libEl.innerHTML = `<div class="lib-state${error ? ' error' : ''}">${html}</div>`; }
+
+  // header comments of a script → { text, use }
+  function playNotes(text) {
+    const lines = [];
+    for (const raw of text.split('\n')) { if (!raw.startsWith('#')) { if (raw.trim()) break; continue; } lines.push(raw.replace(/^#\s?/, '')); }
+    const body = lines.slice(1).join(' ').replace(/\s+/g, ' ').trim();
+    const m = body.match(/^(.*?)\s*Use when:\s*(.*)$/i);
+    return m ? { text: m[1], use: m[2] } : { text: body, use: '' };
+  }
+  async function fetchScript(play) {
+    if (lib.scripts[play.id]) return lib.scripts[play.id];
+    const p = fetch(LIBRARY_BASE + play.file, { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(text => { const { frames: f, errors } = parse(text); if (errors.length) throw new Error(errors[0]); return { text, frames: f, notes: playNotes(text) }; });
+    lib.scripts[play.id] = p;
+    p.catch(() => { delete lib.scripts[play.id]; });
+    return p;
+  }
+
+  // ---- previews: the board's own drawing, aimed at another canvas ----
+  function cropFor(fr) {
+    let lo = 60, hi = 0;
+    const use = x => { lo = Math.min(lo, x); hi = Math.max(hi, x + 1); };
+    fr.forEach(f => {
+      onIceIds(f).forEach(id => { if (!id.endsWith('G') && (isHome(id) || !onIceIds(f).some(isHome))) use(f.pos[id][0]); });
+      if (f.puck.at) use(f.puck.at[0]);
+    });
+    if (lo > hi) return [0, 60];
+    if (hi <= 33) return [0, 33];
+    if (lo >= 27) return [27, 60];
+    return [0, 60];
+  }
+  function drawPreview(cv, fr, idx, tt = 0, anim = false, cropFrames) {
+    const rect = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, rect.width), h = Math.max(1, rect.height);
+    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const [x0, x1] = cv._crop || (cv._crop = cropFor(cropFrames || fr));
+    const keep = { ctx, s, cssW, cssH, frames, cur, selected, hover, playing, t, pad: { ...PAD }, previewMode };
+    try {
+      ctx = cv.getContext('2d'); previewMode = true;
+      Object.assign(PAD, { l: 0, r: 0, t: 0, b: 0 });
+      const pad = 6;
+      s = Math.min((w - pad * 2) / (x1 - x0), (h - pad * 2) / W);
+      // if the card is wider than the zone, show more rink (toward centre ice) instead of empty margins
+      const vw = Math.min(L, (w - pad * 2) / s);
+      const left = Math.max(0, Math.min(x0 - (vw - (x1 - x0)) / 2, L - vw));
+      cssW = w; cssH = h;
+      frames = fr; cur = idx; selected = null; hover = null; playing = anim; t = tt;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      ctx.translate((w - vw * s) / 2 - left * s, (h - W * s) / 2);
+      const x0r = left;
+      cssW = w + x0r * s * 2; cssH = h + 40;   // clearRect inside draw() covers the shifted area
+      draw();
+    } finally {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ({ ctx, s, cssW, cssH, frames, cur, selected, hover, playing, t, previewMode } = keep);
+      Object.assign(PAD, keep.pad);
+    }
+  }
+
   async function loadLibrary(force) {
-    if (libLoading || (library && !force)) { renderLibrary(); return; }
-    libLoading = true;
+    if (lib.loading) return;
+    if (lib.data && !force) { renderLibrary(); return; }
+    lib.loading = true;
+    libCatsEl.innerHTML = '';
     libState('Loading the library…');
     try {
       const res = await fetch(LIBRARY_BASE + 'library.json', { cache: 'no-cache' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
       if (!Array.isArray(data.plays) || !Array.isArray(data.categories)) throw new Error('library.json is missing categories or plays');
-      library = data;
-      const used = library.categories.filter(c => library.plays.some(p => p.category === c.id));
-      if (!libCat || !used.some(c => c.id === libCat)) libCat = used.length ? used[0].id : null;
+      lib.data = data; lib.scripts = {};
     } catch (e) {
-      library = null;
+      lib.data = null;
       libState(`<span>Couldn't load the library. Check your connection and try again.</span>
         <button class="btn" id="libRetry">Try again</button>
         <p class="lib-note">${esc(e.message || e)} · ${esc(LIBRARY_BASE)}</p>`, true);
       const r = $('libRetry'); if (r) r.addEventListener('click', () => loadLibrary(true));
-      libLoading = false;
+      lib.loading = false;
       return;
     }
-    libLoading = false;
+    lib.loading = false;
     renderLibrary();
   }
-  function renderLibrary() {
-    if (!library) return;
-    const used = library.categories.filter(c => library.plays.some(p => p.category === c.id));
-    libCatsEl.innerHTML = used.length > 1 ? used.map(c =>
-      `<button class="lib-cat" role="tab" data-cat="${esc(c.id)}" aria-selected="${c.id === libCat}">${esc(c.title)}<span class="n">${library.plays.filter(p => p.category === c.id).length}</span></button>`).join('') : '';
-    libCatsEl.querySelectorAll('.lib-cat').forEach(b => b.addEventListener('click', () => { libCat = b.dataset.cat; libOpenId = null; renderLibrary(); }));
-    const cat = used.find(c => c.id === libCat);
-    if (!cat) { libState('The library is empty for now.'); return; }
-    const plays = library.plays.filter(p => p.category === cat.id);
-    libEl.innerHTML = `${used.length === 1 ? `<p class="lib-desc"><b>${esc(cat.title)}</b> · ${esc(cat.description || '')}</p>` : `<p class="lib-desc">${esc(cat.description || '')}</p>`}
-      <ul class="lib-list${libStagger ? ' stagger' : ''}">${plays.map((p, i) => `
-        <li class="lib-item" style="--i:${i}" data-open="${p.id === libOpenId}">
-          <button class="lib-row" data-id="${esc(p.id)}" aria-expanded="${p.id === libOpenId}">
-            <span class="lib-title">${esc(p.title)}</span>
-            ${p.strength ? `<span class="lib-strength">${esc(p.strength)}</span>` : '<span></span>'}
-            ${p.when ? `<span class="lib-when">${esc(p.when)}</span>` : ''}
-          </button>
-          ${p.id === libOpenId ? `<div class="lib-detail">
-            ${(p.tags || []).map(t => `<span class="lib-tag">${esc(t)}</span>`).join('')}
-            <button class="btn primary" data-open="${esc(p.id)}">Open play</button>
-          </div>` : ''}
-        </li>`).join('')}
-      </ul>
-      <p class="lib-note">Opening a play replaces the one on the board.</p>`;
-    libStagger = false;
-    libEl.querySelectorAll('.lib-row').forEach(b => b.addEventListener('click', () => { libOpenId = libOpenId === b.dataset.id ? null : b.dataset.id; renderLibrary(); }));
-    libEl.querySelectorAll('[data-open]').forEach(b => { if (b.tagName === 'BUTTON') b.addEventListener('click', () => openLibraryPlay(b.dataset.open, b)); });
+  const catTitle = id => (lib.data.categories.find(c => c.id === id) || { title: id }).title;
+  function matches(p) {
+    const q = lib.query.trim().toLowerCase();
+    if (!q) return true;
+    return [p.title, p.when, p.strength, catTitle(p.category), ...(p.tags || [])].join(' ').toLowerCase().includes(q);
   }
-  async function openLibraryPlay(id, btn) {
-    const play = library.plays.find(p => p.id === id);
-    if (!play) return;
-    btn.disabled = true; btn.textContent = 'Opening…';
-    try {
-      const res = await fetch(LIBRARY_BASE + play.file, { cache: 'no-cache' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const { frames: f, errors } = parse(await res.text());
-      if (errors.length) throw new Error(errors[0]);
-      frames = f; cur = 0; selected = null; playing = false;
+  function renderLibrary() {
+    if (!lib.data) return;
+    $('libBack').hidden = lib.view !== 'detail';
+    $('libSearchWrap').hidden = lib.view === 'detail';
+    libCatsEl.hidden = lib.view === 'detail';
+    if (lib.view === 'detail') { renderDetail(); return; }
+    const cats = lib.data.categories.filter(c => lib.data.plays.some(p => p.category === c.id));
+    if (lib.cat !== 'all' && !cats.some(c => c.id === lib.cat)) lib.cat = 'all';
+    const count = id => lib.data.plays.filter(p => (id === 'all' || p.category === id) && matches(p)).length;
+    libCatsEl.innerHTML = [{ id: 'all', title: 'All' }, ...cats].map(c =>
+      `<button class="lib-cat" role="tab" data-cat="${esc(c.id)}" aria-selected="${c.id === lib.cat}">${esc(c.title)}<span class="n">${count(c.id)}</span></button>`).join('');
+    libCatsEl.querySelectorAll('.lib-cat').forEach(b => b.addEventListener('click', () => { lib.cat = b.dataset.cat; lib.stagger = true; renderLibrary(); libEl.scrollTop = 0; }));
+    const plays = lib.data.plays.filter(p => (lib.cat === 'all' || p.category === lib.cat) && matches(p));
+    const cat = cats.find(c => c.id === lib.cat);
+    if (!plays.length) { libEl.innerHTML = `<div class="lib-empty">No plays match “${esc(lib.query)}”.</div>`; return; }
+    libEl.innerHTML = `${cat && cat.description ? `<p class="lib-desc">${esc(cat.description)}</p>` : ''}
+      <div class="lib-grid${lib.stagger ? ' stagger' : ''}">${plays.map((p, i) => `
+        <button class="lib-card" style="--i:${i}" data-id="${esc(p.id)}">
+          <canvas class="lib-thumb" aria-hidden="true"></canvas>
+          <span class="lib-card-body">
+            <span class="lib-card-top"><span class="lib-title">${esc(p.title)}</span>${p.strength ? `<span class="lib-strength">${esc(p.strength)}</span>` : ''}</span>
+            ${p.when ? `<span class="lib-when">${esc(p.when)}</span>` : ''}
+            <span class="lib-meta" data-meta>${lib.cat === 'all' ? esc(catTitle(p.category)) : ''}</span>
+          </span>
+        </button>`).join('')}
+      </div>`;
+    lib.stagger = false;
+    libEl.querySelectorAll('.lib-card').forEach(card => {
+      const play = lib.data.plays.find(p => p.id === card.dataset.id);
+      card.addEventListener('click', () => { lib.view = 'detail'; lib.id = play.id; renderLibrary(); libEl.scrollTop = 0; });
+      fetchScript(play).then(sc => {
+        if (!card.isConnected) return;
+        drawPreview(card.querySelector('canvas'), sc.frames, 0, 0, false, sc.frames.slice(0, 2));
+        const meta = card.querySelector('[data-meta]');
+        meta.textContent = [lib.cat === 'all' ? catTitle(play.category) : '', sc.frames.length + ' frames'].filter(Boolean).join(' · ');
+      }).catch(() => {});
+    });
+  }
+
+  // ---- detail: big preview you can play or step through ----
+  let pv = { raf: 0, idx: 0, t: 0, playing: false, last: 0 };
+  function stopPreview() { cancelAnimationFrame(pv.raf); pv.playing = false; }
+  async function renderDetail() {
+    stopPreview();
+    const play = lib.data.plays.find(p => p.id === lib.id);
+    if (!play) { lib.view = 'list'; renderLibrary(); return; }
+    libEl.innerHTML = `<div class="lib-state">Loading “${esc(play.title)}”…</div>`;
+    let sc;
+    try { sc = await fetchScript(play); } catch (e) { libState(`Couldn't load this play: ${esc(e.message || e)}`, true); return; }
+    if (lib.view !== 'detail' || lib.id !== play.id) return;
+    pv = { raf: 0, idx: 0, t: 0, playing: false, last: 0 };
+    const n = sc.frames.length;
+    libEl.innerHTML = `<div class="lib-detail">
+      <div class="lib-stage">
+        <canvas class="lib-big" id="libBig" aria-label="Preview of ${esc(play.title)}"></canvas>
+        <div class="lib-player">
+          <button class="btn primary" id="libPlay"><svg viewBox="0 0 256 256" aria-hidden="true" id="libPlayIcon"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"/></svg><span id="libPlayTxt">Play</span></button>
+          <div class="frames-mini">${sc.frames.map((f, i) => `<button class="lib-fchip" data-i="${i}" aria-current="${i === 0}" title="${esc(f.name)}">${i + 1}</button>`).join('')}</div>
+        </div>
+        <span class="lib-meta" id="libFrameName">1 · ${esc(sc.frames[0].name)}</span>
+      </div>
+      <div class="lib-info">
+        <span class="lib-kicker">${esc(catTitle(play.category))}${play.strength ? ' · ' + esc(play.strength) : ''} · ${n} frames</span>
+        <span class="lib-title">${esc(play.title)}</span>
+        ${sc.notes.text ? `<p class="lib-text">${esc(sc.notes.text)}</p>` : ''}
+        ${sc.notes.use || play.when ? `<p class="lib-use"><b>Use when:</b> ${esc(sc.notes.use || play.when)}</p>` : ''}
+        ${(play.tags || []).length ? `<div class="lib-tags">${play.tags.map(t => `<span class="lib-tag">${esc(t)}</span>`).join('')}</div>` : ''}
+        <div class="lib-actions">
+          <button class="btn primary" id="libOpen">Open play</button>
+          <span class="lib-note">Replaces the play on the board.</span>
+        </div>
+      </div>
+    </div>`;
+    const big = $('libBig');
+    const show = () => {
+      drawPreview(big, sc.frames, pv.idx, pv.t, pv.playing);
+      libEl.querySelectorAll('.lib-fchip').forEach(c => c.setAttribute('aria-current', String(+c.dataset.i === pv.idx)));
+      $('libFrameName').textContent = `${pv.idx + 1} · ${sc.frames[pv.idx].name}`;
+      $('libPlayTxt').textContent = pv.playing ? 'Pause' : 'Play';
+      $('libPlayIcon').innerHTML = pv.playing ? '<path d="M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z"/>' : '<path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"/>';
+    };
+    const tickPv = now => {
+      if (!pv.playing || !big.isConnected) return;
+      pv.t += (now - pv.last) / frameDur(); pv.last = now;
+      if (pv.t >= 1) { pv.idx++; pv.t = 0; if (pv.idx >= n - 1) { pv.playing = false; show(); return; } }
+      show(); pv.raf = requestAnimationFrame(tickPv);
+    };
+    $('libPlay').addEventListener('click', () => {
+      if (pv.playing) { stopPreview(); pv.t = 0; show(); return; }
+      if (n < 2) return;
+      if (pv.idx >= n - 1) pv.idx = 0;
+      pv.playing = true; pv.t = 0; pv.last = performance.now(); show(); pv.raf = requestAnimationFrame(tickPv);
+    });
+    libEl.querySelectorAll('.lib-fchip').forEach(c => c.addEventListener('click', () => { stopPreview(); pv.idx = +c.dataset.i; pv.t = 0; show(); }));
+    $('libOpen').addEventListener('click', () => {
+      stopPreview();
+      frames = clone(sc.frames); cur = 0; selected = null; playing = false;
       syncScript(true); changed();
       setLibrary(false);
       flashBoard(`Opened “${play.title}”`);
-    } catch (e) {
-      btn.disabled = false; btn.textContent = 'Open play';
-      flashBoard(`Couldn't open “${play.title}”: ${e.message || e}`);
-    }
+    });
+    requestAnimationFrame(show);
   }
-  function setLibrary(open) { animShow($('library'), open); if (open) { libStagger = true; loadLibrary(false); $('libraryClose').focus(); } }
+
+  libSearch.addEventListener('input', () => { lib.query = libSearch.value; renderLibrary(); });
+  $('libBack').addEventListener('click', () => { stopPreview(); lib.view = 'list'; renderLibrary(); });
+  function setLibrary(open) {
+    animShow($('library'), open);
+    if (open) { lib.stagger = true; loadLibrary(false); (lib.view === 'detail' ? $('libraryClose') : libSearch).focus({ preventScroll: true }); }
+    else stopPreview();
+  }
   $('libraryBtn').addEventListener('click', () => { setMenu(false); setLibrary(true); });
   $('libraryClose').addEventListener('click', () => setLibrary(false));
   $('library').addEventListener('click', e => { if (e.target.id === 'library') setLibrary(false); });
+  new ResizeObserver(() => { if (isOpen($('library')) && lib.view === 'list') libEl.querySelectorAll('.lib-card').forEach(card => {
+    const play = lib.data && lib.data.plays.find(p => p.id === card.dataset.id);
+    const sc = play && lib.scripts[play.id];
+    if (sc) sc.then(x => drawPreview(card.querySelector('canvas'), x.frames, 0, 0, false, x.frames.slice(0, 2))).catch(() => {});
+  }); }).observe(libEl);
 
   // ---------- Players on ice ----------
   // Putting a player on or off applies from the current frame to the end of the play.
@@ -1811,7 +1987,7 @@ puck 54,15 shot
     if (e.key === 'Escape') {
       if (isOpen($('help'))) { setHelp(false); return; }
       if (isOpen($('lineup'))) { setLineup(false); return; }
-      if (isOpen($('library'))) { setLibrary(false); return; }
+      if (isOpen($('library'))) { if (lib.view === 'detail') { stopPreview(); lib.view = 'list'; renderLibrary(); } else setLibrary(false); return; }
       if (isOpen(menuEl)) { setMenu(false); menuBtn.focus(); return; }
       if (drawerOpen() && e.target !== scriptEl) { setDrawer(false); return; }
     }

@@ -1,0 +1,57 @@
+# PENALTY KILL 4-on-5 · BOX
+# Home defends left; HRW is in the box, so he isn't in the script. The
+# away power play uses numbered skaters A1–A5 (no fixed positions).
+# The box shifts with the puck: the strong-side forward pressures, the rest
+# collapse to keep the middle closed, then the D blocks and clears.
+# Use when: the default kill, especially against a 1-3-1.
+
+frame Setup
+HG  4,14
+HC  14,11
+HLW 14,19
+HRD 8,11
+HLD 8,19
+AG  55,14
+A1  20,15
+A2  15,25
+A3  15,5
+A4  12,15
+A5  6,17
+puck A2
+
+frame Shift up
+A2  16,24
+HLW 15,22
+HC  13,16
+HLD 9,20
+HRD 7,13
+puck A2
+
+frame To the point
+A1  20,14
+HLW 15,20
+HC  14,14
+HLD 8,19
+HRD 8,11
+puck A1
+
+frame Down the flank
+A1  21,14
+A3  14,6
+HC  14,9
+HLW 14,15
+HRD 9,9
+HLD 7,16
+puck A3
+
+frame Block and clear
+A3  13,9
+HRD 11,7
+HC  15,10
+puck HRD
+
+frame Clear
+HRD 12,7
+HC  17,11
+A3  12,10
+puck 40,4

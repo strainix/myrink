@@ -1,0 +1,43 @@
+# FACEOFF · DEFENSIVE ZONE WIN TO BREAKOUT
+# Home defends left, faceoff on the bottom dot (10,8). The centre wins it
+# back to the corner D, the wall winger pops to the hash marks for the
+# outlet and the play leaves the zone up the strong side.
+# Use when: the default D-zone faceoff, with a centre who wins backhand draws.
+
+frame Line up
+HG  4,14
+HC  9,8
+HRW 9,3
+HLW 9,12
+HRD 6,9
+HLD 5,18
+AG  55,14
+AC  12,7
+ALW 12,3
+ARW 12,12
+ALD 20,5
+ARD 20,21
+puck 10,7
+
+frame Win back
+HC  9,8
+HRD 6,5
+puck HRD
+
+frame Up the wall
+HRW 15,2
+HC  12,9
+HLW 15,13
+ALW 13,5
+AC  11,9
+puck HRW
+
+frame Exit
+HRW 23,3
+HC  20,8
+HLW 24,13
+HRD 10,6
+HLD 9,15
+ALD 25,5
+ARD 25,20
+puck HRW

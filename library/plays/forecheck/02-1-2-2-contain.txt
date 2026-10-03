@@ -1,0 +1,49 @@
+# FORECHECK · 1-2-2 (contain)
+# Home attacks right. F1 (HC) doesn't chase: he comes from the inside and
+# angles the D to the boards. F2 and F3 sit across the zone; the strong-side
+# one (HRW) jumps the pass up the wall that F1 made predictable. Both D hold
+# the blue line.
+# Use when: protecting a lead, against fast transition teams, or late in a shift.
+
+frame Set up
+HG  4,14
+HC  49,11
+HRW 45,5
+HLW 45,24
+HRD 39,8
+HLD 39,20
+AG  55,14
+ALD 55,5
+ARD 54,19
+AC  50,14
+ALW 47,1
+ARW 49,26
+puck ALD
+
+frame Angle to the wall
+ALD 52,3
+HC  53,7 via 51,9
+HRW 47,3
+ALW 46,1
+AC  51,11
+puck ALD
+
+frame Jump the wall pass
+HRW 48,2
+ALD 52,2
+HC  53,5
+ALW 45,2
+puck HRW
+
+frame Quick strike
+HRW 49,3
+HC  51,11 via 53,8
+HLW 48,18
+AC  50,8
+HRD 41,7
+puck HC
+
+frame Shot
+HC  52,12
+HLW 51,17
+puck 56,15 shot
