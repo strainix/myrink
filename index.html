@@ -93,7 +93,7 @@ body {
   display: grid; place-items: center;
   padding: 68px 16px 150px;
 }
-canvas#rink { display: block; touch-action: none; }
+canvas#rink { display: block; touch-action: none; position: absolute; inset: 0; }
 canvas#rink.grab { cursor: grab; }
 canvas#rink.grabbing { cursor: grabbing; }
 .float {
@@ -905,6 +905,7 @@ puck 54,15 shot
   let s = 10, cssW = 600, cssH = 320, layoutReady = false;
   // rink zoom: s = sBase * zoom; view = world x at the left edge and world y at the top edge of the rink area
   let zoom = 1, sBase = 10;
+  let ox = 26, oy = 6;   // screen position of the rink's top-left corner at 100% (the canvas covers the whole board area)
   const view = { x: 0, top: W };
   const ZOOM_MAX = 5;
   const C = {};
@@ -953,8 +954,11 @@ puck 54,15 shot
     sBase = Math.max(4, Math.min((availW - PAD.l - PAD.r) / L, (availH - PAD.t - PAD.b) / W));
     s = sBase * zoom;
     clampView();
-    cssW = PAD.l + L * sBase + PAD.r;
-    cssH = PAD.t + W * sBase + PAD.b;
+    // the canvas fills the whole board area (behind the floating bars); at 100% the rink sits
+    // centred in the free space, zoomed in it runs all the way to the screen edges
+    cssW = sw; cssH = sh;
+    ox = parseFloat(st.paddingLeft) + (availW - (PAD.l + L * sBase + PAD.r)) / 2 + PAD.l;
+    oy = parseFloat(st.paddingTop) + (availH - (PAD.t + W * sBase + PAD.b)) / 2 + PAD.t;
     const dpr = window.devicePixelRatio || 1;
     canvas.style.width = cssW + 'px';
     canvas.style.height = cssH + 'px';
@@ -963,20 +967,20 @@ puck 54,15 shot
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     draw();
   }
-  const px = x => PAD.l + (x - view.x) * s;
-  const py = y => PAD.t + (view.top - y) * s;
-  const toWorld = (cx, cy) => [(cx - PAD.l) / s + view.x, view.top - (cy - PAD.t) / s];
+  const px = x => ox + (x - view.x) * s;
+  const py = y => oy + (view.top - y) * s;
+  const toWorld = (cx, cy) => [(cx - ox) / s + view.x, view.top - (cy - oy) / s];
   function clampView() {
     view.x = Math.min(Math.max(0, view.x), L - L / zoom);
     view.top = Math.min(W, Math.max(W / zoom, view.top));
   }
   // zoom by factor, keeping the world point under screen point (cx, cy) where it is
-  function zoomAt(factor, cx = PAD.l + L * sBase / 2, cy = PAD.t + W * sBase / 2) {
+  function zoomAt(factor, cx = ox + L * sBase / 2, cy = oy + W * sBase / 2) {
     const w = toWorld(cx, cy);
     zoom = Math.min(ZOOM_MAX, Math.max(1, zoom * factor));
     s = sBase * zoom;
-    view.x = w[0] - (cx - PAD.l) / s;
-    view.top = w[1] + (cy - PAD.t) / s;
+    view.x = w[0] - (cx - ox) / s;
+    view.top = w[1] + (cy - oy) / s;
     clampView(); updateZoomUI(); draw();
   }
   function panBy(dx, dy) { view.x -= dx / s; view.top += dy / s; clampView(); draw(); }
@@ -1241,32 +1245,44 @@ puck 54,15 shot
 
   // cell numbers along the bottom and left edge, for the part of the rink in view
   function drawAxes() {
-    ctx.fillStyle = C.muted;
-    ctx.font = `${Math.max(8, Math.min(11, sBase * 0.75))}px "JetBrains Mono", monospace`;
+    const fs = Math.max(8, Math.min(11, sBase * 0.75));
+    ctx.font = `${fs}px "JetBrains Mono", monospace`;
     const step = s >= 28 ? 1 : 5;
-    const bottom = PAD.t + W * sBase, right = PAD.l + L * sBase;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    const bottom = oy + W * sBase, right = ox + L * sBase;
+    const pills = zoom > 1.001;
+    const label = (txt, x, y, align) => {
+      const w = ctx.measureText(txt).width;
+      const bx = align === 'center' ? x - w / 2 : x - w;
+      if (pills) {
+        const ph = fs + 6, pw = w + 8, r = ph / 2;
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.88)'; ctx.strokeStyle = 'rgba(22,35,47,0.12)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.roundRect(bx - 4, y - ph / 2, pw, ph, r); ctx.fill(); ctx.stroke();
+        ctx.restore();
+      }
+      ctx.fillStyle = pills ? C.fg : C.muted;
+      ctx.fillText(txt, x, y);
+    };
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    const xRow = bottom + 6 + fs / 2;
     for (let x = 0; x < COLS; x++) {
       if (x % step && !(zoom === 1 && x === 59)) continue;     // at full view also mark the last column
       const X = px(x + 0.5);
-      if (X >= PAD.l - 1 && X <= right + 1) ctx.fillText(String(x), X, bottom + 6);
+      if (X >= ox - 1 && X <= right + 1) label(String(x), X, xRow, 'center');
     }
-    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.textAlign = 'right';
     for (let y = 0; y < ROWS; y++) {
       if (y % step && !(zoom === 1 && y === 29)) continue;
       const Y = py(y + 0.5);
-      if (Y >= PAD.t - 1 && Y <= bottom + 1) ctx.fillText(String(y), PAD.l - 6, Y);
+      if (Y >= oy - 1 && Y <= bottom + 1) label(String(y), ox - 6, Y, 'right');
     }
   }
   function draw() {
     if (!C.ice) readColors();
     ctx.clearRect(0, 0, cssW, cssH);
-    if (previewMode) { drawScene(); return; }
-    ctx.save();
-    ctx.beginPath(); ctx.rect(PAD.l - 3, PAD.t - 3, L * sBase + 6, W * sBase + 6); ctx.clip();
     drawScene();
-    ctx.restore();
-    drawAxes();
+    if (!previewMode) drawAxes();
   }
   function drawScene() {
     drawRink();
@@ -1469,8 +1485,8 @@ puck 54,15 shot
       const p = pinchInfo();
       zoom = Math.min(ZOOM_MAX, Math.max(1, pinch.z0 * p.d / pinch.d0));
       s = sBase * zoom;
-      view.x = pinch.w[0] - (p.mx - PAD.l) / s;      // keep the pinched spot under the fingers
-      view.top = pinch.w[1] + (p.my - PAD.t) / s;
+      view.x = pinch.w[0] - (p.mx - ox) / s;      // keep the pinched spot under the fingers
+      view.top = pinch.w[1] + (p.my - oy) / s;
       clampView(); updateZoomUI(); draw();
       return;
     }
@@ -1848,9 +1864,9 @@ puck 54,15 shot
     cv._args = [fr, idx, tt, anim, cropFrames, cover];
     if (!cv._watched) { cv._watched = true; previewRO.observe(cv); }
     const [x0, x1, ymid] = cv._crop || (cv._crop = cropFor(cropFrames || fr));
-    const keep = { ctx, s, sBase, zoom, cssW, cssH, frames, cur, selected, hover, playing, t, pad: { ...PAD }, view: { ...view }, previewMode };
+    const keep = { ctx, s, sBase, zoom, ox, oy, cssW, cssH, frames, cur, selected, hover, playing, t, pad: { ...PAD }, view: { ...view }, previewMode };
     try {
-      ctx = cv.getContext('2d'); previewMode = true; zoom = 1; view.x = 0; view.top = W;
+      ctx = cv.getContext('2d'); previewMode = true; zoom = 1; view.x = 0; view.top = W; ox = 0; oy = 0;
       Object.assign(PAD, { l: 0, r: 0, t: 0, b: 0 });
       const pad = 6;
       s = cover ? (w - pad * 2) / (x1 - x0) : Math.min((w - pad * 2) / (x1 - x0), (h - pad * 2) / W);
@@ -1869,7 +1885,7 @@ puck 54,15 shot
       draw();
     } finally {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ({ ctx, s, sBase, zoom, cssW, cssH, frames, cur, selected, hover, playing, t, previewMode } = keep);
+      ({ ctx, s, sBase, zoom, ox, oy, cssW, cssH, frames, cur, selected, hover, playing, t, previewMode } = keep);
       Object.assign(PAD, keep.pad); Object.assign(view, keep.view);
     }
   }
