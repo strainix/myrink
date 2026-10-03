@@ -458,7 +458,6 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
           <div class="menu" id="menu" role="menu" hidden>
             <button role="menuitem" id="libraryBtn">Library</button>
             <hr>
-            <button role="menuitem" id="sampleBtn">Load sample breakout</button>
             <button role="menuitem" id="faceoffBtn">New play from faceoff</button>
             <button role="menuitem" id="installBtn" hidden>Install app</button>
             <button role="menuitem" id="emptyBtn">New empty play</button>
@@ -1763,10 +1762,6 @@ puck 54,15 shot
   $('helpBtn').addEventListener('click', () => { setMenu(false); setHelp(true); });
   $('helpClose').addEventListener('click', () => setHelp(false));
   $('help').addEventListener('click', e => { if (e.target.id === 'help') setHelp(false); });
-  $('sampleBtn').addEventListener('click', () => {
-    setMenu(false);
-    frames = parse(SAMPLE).frames; cur = 0; selected = null; playing = false; syncScript(true); changed();
-  });
   $('faceoffBtn').addEventListener('click', () => {
     setMenu(false);
     frames = [{ name: 'Faceoff', pos: clone(FACEOFF), puck: { at: [29, 14] } }];
