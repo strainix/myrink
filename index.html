@@ -611,7 +611,7 @@ x 0–59 left → right, y 0–29 bottom → top</pre>
       <li><kbd>,</kbd> <kbd>.</kbd> previous / next frame</li>
       <li><kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> nudge the selected token one cell</li>
       <li><kbd>W</kbd> add a waypoint to the selected player's next move</li>
-      <li><kbd>+</kbd> <kbd>−</kbd> zoom the rink · <kbd>0</kbd> reset (or pinch, Ctrl+scroll; drag empty ice to move around)</li>
+      <li><kbd>+</kbd> <kbd>−</kbd> zoom the rink · <kbd>0</kbd> reset (or pinch, Ctrl+scroll; drag empty ice to move around). Zoomed in, the x,y label in the corner shows the cell.</li>
       <li><kbd>B</kbd> toggle backwards skating for the selected player's next move</li>
       <li><kbd>S</kbd> open or close the script · <kbd>Esc</kbd> close panels</li>
     </ul>
@@ -960,8 +960,6 @@ puck 54,15 shot
     cssW = sw; cssH = sh;
     ox = parseFloat(st.paddingLeft) + (availW - (PAD.l + L * sBase + PAD.r)) / 2 + PAD.l;
     oy = parseFloat(st.paddingTop) + (availH - (PAD.t + W * sBase + PAD.b)) / 2 + PAD.t;
-    free.l = parseFloat(st.paddingLeft); free.r = sw - parseFloat(st.paddingRight);
-    free.t = parseFloat(st.paddingTop); free.b = sh - parseFloat(st.paddingBottom);
     const dpr = window.devicePixelRatio || 1;
     canvas.style.width = cssW + 'px';
     canvas.style.height = cssH + 'px';
@@ -1246,49 +1244,19 @@ puck 54,15 shot
     });
   }
 
-  // cell numbers along the bottom and left edge, for the part of the rink in view
+  // cell numbers along the bottom and left edge of the rink, shown at 100% only
+  // (zoomed in, the x,y label in the corner tells you the cell you're on)
   function drawAxes() {
-    const fs = Math.max(8, Math.min(11, sBase * 0.75));
-    ctx.font = `${fs}px "JetBrains Mono", monospace`;
-    const step = s >= 28 ? 1 : 5;
-    const bottom = oy + W * sBase, right = ox + L * sBase;
-    const pills = zoom > 1.001;   // zoomed in: numbers sit over the ice and get a glow
-    const label = (txt, x, y, align) => {
-      const w = ctx.measureText(txt).width;
-      if (pills) {
-        // over the ice: a soft white glow behind the number keeps it readable on lines and markings
-        ctx.save();
-        ctx.shadowColor = 'rgba(255,255,255,0.95)'; ctx.shadowBlur = 5;
-        ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-        ctx.strokeText(txt, x, y);
-        ctx.restore();
-      }
-      ctx.fillStyle = pills ? C.fg : C.muted;
-      ctx.fillText(txt, x, y);
-    };
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'center';
-    // At 100% the numbers hug the rink. Zoomed in, the bottom row sits just below the bottom boards
-    // if they're in view, otherwise at the bottom of the free area; the left column likewise sits
-    // beside the left boards or at the left edge. Neither goes under the floating bars.
-    const zoomed = zoom > 1.001;
-    const xRow = zoomed ? Math.min(free.b - fs / 2 - 6, Math.max(py(0) + 6 + fs / 2, free.t + fs * 3)) : bottom + 6 + fs / 2;
-    const yCol = zoomed ? Math.max(free.l + 30, Math.min(px(0) - 6, free.r - 60)) : ox - 6;
-    const xMin = zoomed ? yCol + 10 : ox - 1;
-    const xMax = zoomed ? free.r - 12 : right + 1;
-    const yMin = zoomed ? free.t + fs : oy - 1;
-    const yMax = zoomed ? xRow - fs - 2 : bottom + 1;
-    for (let x = 0; x < COLS; x++) {
-      if (x % step && !(zoom === 1 && x === 59)) continue;     // at full view also mark the last column
-      const X = px(x + 0.5);
-      if (X >= xMin && X <= xMax) label(String(x), X, xRow, 'center');
-    }
-    ctx.textAlign = 'right';
-    for (let y = 0; y < ROWS; y++) {
-      if (y % step && !(zoom === 1 && y === 29)) continue;
-      const Y = py(y + 0.5);
-      if (Y >= yMin && Y <= yMax) label(String(y), yCol, Y, 'right');
-    }
+    if (zoom > 1.001) return;
+    ctx.fillStyle = C.muted;
+    ctx.font = `${Math.max(8, Math.min(11, sBase * 0.75))}px "JetBrains Mono", monospace`;
+    const bottom = oy + W * sBase;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let x = 0; x < COLS; x += 5) ctx.fillText(String(x), px(x + 0.5), bottom + 6);
+    ctx.fillText('59', px(59.5), bottom + 6);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let y = 0; y < ROWS; y += 5) ctx.fillText(String(y), ox - 6, py(y + 0.5));
+    ctx.fillText('29', ox - 6, py(29.5));
   }
   function draw() {
     if (!C.ice) readColors();
