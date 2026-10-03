@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7f9">
 <meta name="description" content="Ice hockey tactics board on a 60 × 30 m Swiss rink with a one-metre grid.">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -56,7 +56,7 @@
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html, body { height: 100%; overscroll-behavior: none; }
+html, body { height: 100%; overscroll-behavior: none; touch-action: pan-x pan-y; }   /* no pinch or double-tap zoom of the app; the rink handles its own pinch */
 
 /* Subtle scrollbars: thin, no track, thumb only shows on hover or while scrolling */
 .scroll-subtle { overscroll-behavior: contain; }
@@ -117,6 +117,12 @@ canvas#rink.grabbing { cursor: grabbing; }
 .btn .ico { width: 30px; height: 12px; fill: none; }
 .btn[aria-pressed="true"] .ico { stroke: currentColor; }
 .top-actions { display: flex; gap: 6px; align-items: center; padding: 5px; margin-left: auto; }
+.zoomctl { display: flex; align-items: center; gap: 2px; padding-right: 4px; margin-right: 2px; border-right: 1px solid var(--line); }
+.zoomctl .btn { border-color: transparent; background: transparent; padding: 6px 7px; }
+.zoom-pct { font: 500 12px var(--font-mono); font-variant-numeric: tabular-nums; min-width: 48px; justify-content: center; color: var(--muted); }
+.zoom-pct.zoomed { color: var(--fg); }
+.app.side .zoomctl { flex-direction: column; border-right: 0; border-bottom: 1px solid var(--line); padding: 0 0 4px; margin: 0 0 2px; }
+.app.side .zoom-pct { min-width: 0; padding-inline: 4px; }
 @media (max-width: 1099px) { .top-float .legend { display: none; } }
 
 .bottom-float {
@@ -437,6 +443,11 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
         <span class="chip"><svg class="ico opp" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 6H29" stroke-dasharray="3.5 2.6"/><path d="M27 2.5 31 6 27 9.5"/></svg>Opponent</span>
       </div>
       <div class="top-actions float">
+        <div class="zoomctl" role="group" aria-label="Rink zoom">
+          <button class="btn icon" id="zoomOut" title="Zoom out (−)" aria-label="Zoom out"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z"/></svg></button>
+          <button class="btn zoom-pct" id="zoomReset" title="Reset zoom (0)">100%</button>
+          <button class="btn icon" id="zoomIn" title="Zoom in (+)" aria-label="Zoom in"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></svg></button>
+        </div>
         <button class="btn" id="scriptToggle" aria-pressed="false" aria-controls="drawer" title="Script (S)">
           <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z"/></svg><span class="lbl">Script</span>
         </button>
@@ -600,6 +611,7 @@ x 0–59 left → right, y 0–29 bottom → top</pre>
       <li><kbd>,</kbd> <kbd>.</kbd> previous / next frame</li>
       <li><kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> nudge the selected token one cell</li>
       <li><kbd>W</kbd> add a waypoint to the selected player's next move</li>
+      <li><kbd>+</kbd> <kbd>−</kbd> zoom the rink · <kbd>0</kbd> reset (or pinch, Ctrl+scroll; drag empty ice to move around)</li>
       <li><kbd>B</kbd> toggle backwards skating for the selected player's next move</li>
       <li><kbd>S</kbd> open or close the script · <kbd>Esc</kbd> close panels</li>
     </ul>
@@ -891,6 +903,10 @@ puck 54,15 shot
   const stageEl = document.getElementById('stage');
   const PAD = { l: 26, r: 6, t: 6, b: 22 };
   let s = 10, cssW = 600, cssH = 320, layoutReady = false;
+  // rink zoom: s = sBase * zoom; view = world x at the left edge and world y at the top edge of the rink area
+  let zoom = 1, sBase = 10;
+  const view = { x: 0, top: W };
+  const ZOOM_MAX = 5;
   const C = {};
   function readColors() {
     const cs = getComputedStyle(document.documentElement);
@@ -934,9 +950,11 @@ puck 54,15 shot
     const st = getComputedStyle(stageEl);
     const availW = stageEl.clientWidth - parseFloat(st.paddingLeft) - parseFloat(st.paddingRight);
     const availH = stageEl.clientHeight - parseFloat(st.paddingTop) - parseFloat(st.paddingBottom);
-    s = Math.max(4, Math.min((availW - PAD.l - PAD.r) / L, (availH - PAD.t - PAD.b) / W));
-    cssW = PAD.l + L * s + PAD.r;
-    cssH = PAD.t + W * s + PAD.b;
+    sBase = Math.max(4, Math.min((availW - PAD.l - PAD.r) / L, (availH - PAD.t - PAD.b) / W));
+    s = sBase * zoom;
+    clampView();
+    cssW = PAD.l + L * sBase + PAD.r;
+    cssH = PAD.t + W * sBase + PAD.b;
     const dpr = window.devicePixelRatio || 1;
     canvas.style.width = cssW + 'px';
     canvas.style.height = cssH + 'px';
@@ -945,9 +963,23 @@ puck 54,15 shot
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     draw();
   }
-  const px = x => PAD.l + x * s;
-  const py = y => PAD.t + (W - y) * s;
-  const toWorld = (cx, cy) => [(cx - PAD.l) / s, W - (cy - PAD.t) / s];
+  const px = x => PAD.l + (x - view.x) * s;
+  const py = y => PAD.t + (view.top - y) * s;
+  const toWorld = (cx, cy) => [(cx - PAD.l) / s + view.x, view.top - (cy - PAD.t) / s];
+  function clampView() {
+    view.x = Math.min(Math.max(0, view.x), L - L / zoom);
+    view.top = Math.min(W, Math.max(W / zoom, view.top));
+  }
+  // zoom by factor, keeping the world point under screen point (cx, cy) where it is
+  function zoomAt(factor, cx = PAD.l + L * sBase / 2, cy = PAD.t + W * sBase / 2) {
+    const w = toWorld(cx, cy);
+    zoom = Math.min(ZOOM_MAX, Math.max(1, zoom * factor));
+    s = sBase * zoom;
+    view.x = w[0] - (cx - PAD.l) / s;
+    view.top = w[1] + (cy - PAD.t) / s;
+    clampView(); updateZoomUI(); draw();
+  }
+  function panBy(dx, dy) { view.x -= dx / s; view.top += dy / s; clampView(); draw(); }
 
   function rinkPath() {
     const x0 = px(0), y0 = py(W), w = L * s, h = W * s, r = R * s;
@@ -1013,15 +1045,6 @@ puck 54,15 shot
 
     rinkPath(); ctx.strokeStyle = C.boards; ctx.lineWidth = Math.max(1.25, 0.18 * s); ctx.stroke();
 
-    if (previewMode) return;
-    ctx.fillStyle = C.muted;
-    ctx.font = `${Math.max(8, Math.min(11, s * 0.75))}px "JetBrains Mono", monospace`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    for (let x = 0; x < COLS; x += 5) ctx.fillText(String(x), px(x + 0.5), py(0) + 6);
-    ctx.fillText('59', px(59.5), py(0) + 6);
-    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    for (let y = 0; y < ROWS; y += 5) ctx.fillText(String(y), px(0) - 6, py(y + 0.5));
-    ctx.fillText('29', px(0) - 6, py(29.5));
   }
 
   // ---------- Positions ----------
@@ -1216,9 +1239,36 @@ puck 54,15 shot
     });
   }
 
+  // cell numbers along the bottom and left edge, for the part of the rink in view
+  function drawAxes() {
+    ctx.fillStyle = C.muted;
+    ctx.font = `${Math.max(8, Math.min(11, sBase * 0.75))}px "JetBrains Mono", monospace`;
+    const step = s >= 28 ? 1 : 5;
+    const bottom = PAD.t + W * sBase, right = PAD.l + L * sBase;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let x = 0; x < COLS; x++) {
+      if (x % step && !(zoom === 1 && x === 59)) continue;     // at full view also mark the last column
+      const X = px(x + 0.5);
+      if (X >= PAD.l - 1 && X <= right + 1) ctx.fillText(String(x), X, bottom + 6);
+    }
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let y = 0; y < ROWS; y++) {
+      if (y % step && !(zoom === 1 && y === 29)) continue;
+      const Y = py(y + 0.5);
+      if (Y >= PAD.t - 1 && Y <= bottom + 1) ctx.fillText(String(y), PAD.l - 6, Y);
+    }
+  }
   function draw() {
     if (!C.ice) readColors();
     ctx.clearRect(0, 0, cssW, cssH);
+    if (previewMode) { drawScene(); return; }
+    ctx.save();
+    ctx.beginPath(); ctx.rect(PAD.l - 3, PAD.t - 3, L * sBase + 6, W * sBase + 6); ctx.clip();
+    drawScene();
+    ctx.restore();
+    drawAxes();
+  }
+  function drawScene() {
     drawRink();
     const snap = snapshot();
     // each frame shows what happens next: arrows run from this frame into the following one
@@ -1363,7 +1413,28 @@ puck 54,15 shot
   }
 
   let lastTap = { t: 0, w: [0, 0] };
+  const pointers = new Map();          // active pointers on the rink: id -> {x, y}
+  let pinch = null, pan = null, ignoreRest = false;
+  const capture = e => { try { canvas.setPointerCapture(e.pointerId); } catch (_) {} };
+  const localXY = e => { const r = canvas.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  function pinchInfo() {
+    const [a, b] = [...pointers.values()];
+    return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+  }
   canvas.addEventListener('pointerdown', e => {
+    const [lx, ly] = localXY(e);
+    pointers.set(e.pointerId, { x: lx, y: ly });
+    if (pointers.size === 2) {
+      // second finger: stop whatever the first one was doing and zoom instead
+      if (drag) { drag = null; canvas.className = ''; changed(); }
+      pan = null;
+      const p = pinchInfo();
+      pinch = { d0: p.d, z0: zoom, w: toWorld(p.mx, p.my) };
+      capture(e);
+      return;
+    }
+    if (pointers.size > 2 || pinch) return;
+    ignoreRest = false;
     if (playing) return;
     const w = pointerWorld(e);
     const now = performance.now();
@@ -1382,15 +1453,36 @@ puck 54,15 shot
     const vi = hitVia(w);
     if (vi >= 0) {
       drag = { via: vi, id: selected };
-      canvas.setPointerCapture(e.pointerId); canvas.className = 'grabbing';
+      capture(e); canvas.className = 'grabbing';
       draw(); return;
     }
     const id = hit(w);
     selected = id;
-    if (id) { drag = id; canvas.setPointerCapture(e.pointerId); canvas.className = 'grabbing'; }
+    if (id) { drag = id; capture(e); canvas.className = 'grabbing'; }
+    else if (zoom > 1) { pan = { x: e.clientX, y: e.clientY, moved: false }; capture(e); }
     updateBackBtn(); draw();
   });
   canvas.addEventListener('pointermove', e => {
+    if (pointers.has(e.pointerId)) { const [lx, ly] = localXY(e); pointers.set(e.pointerId, { x: lx, y: ly }); }
+    if (pinch) {
+      if (pointers.size < 2) return;
+      const p = pinchInfo();
+      zoom = Math.min(ZOOM_MAX, Math.max(1, pinch.z0 * p.d / pinch.d0));
+      s = sBase * zoom;
+      view.x = pinch.w[0] - (p.mx - PAD.l) / s;      // keep the pinched spot under the fingers
+      view.top = pinch.w[1] + (p.my - PAD.t) / s;
+      clampView(); updateZoomUI(); draw();
+      return;
+    }
+    if (ignoreRest) return;
+    if (pan) {
+      const dx = e.clientX - pan.x, dy = e.clientY - pan.y;
+      if (!pan.moved && Math.hypot(dx, dy) < 4) return;
+      pan.moved = true; canvas.className = 'grabbing';
+      pan.x = e.clientX; pan.y = e.clientY;
+      panBy(dx, dy);
+      return;
+    }
     const w = pointerWorld(e);
     const inIce = inside(w[0], w[1]);
     hover = inIce ? [Math.floor(w[0]), Math.floor(w[1])] : null;
@@ -1414,9 +1506,26 @@ puck 54,15 shot
     }
     draw();
   });
-  const endDrag = () => { if (drag) { drag = null; canvas.className = ''; changed(); } };
+  const endDrag = e => {
+    pointers.delete(e.pointerId);
+    if (pinch) { if (pointers.size < 2) { pinch = null; ignoreRest = pointers.size > 0; } return; }
+    if (pointers.size === 0) ignoreRest = false;
+    if (pan) { pan = null; canvas.className = ''; }
+    if (drag) { drag = null; canvas.className = ''; changed(); }
+  };
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', endDrag);
+  // trackpad pinch / Ctrl+scroll zooms the rink; plain scrolling pans it while zoomed in
+  canvas.addEventListener('wheel', e => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const [lx, ly] = localXY(e);
+      zoomAt(Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0025) * (e.ctrlKey && Math.abs(e.deltaY) < 50 ? 4 : 1)), lx, ly);
+    } else if (zoom > 1) {
+      e.preventDefault();
+      panBy(-e.deltaX, -e.deltaY);
+    }
+  }, { passive: false });
   canvas.addEventListener('pointerleave', () => { hover = null; updateReadout(null); draw(); });
 
   // ---------- Playback ----------
@@ -1739,9 +1848,9 @@ puck 54,15 shot
     cv._args = [fr, idx, tt, anim, cropFrames, cover];
     if (!cv._watched) { cv._watched = true; previewRO.observe(cv); }
     const [x0, x1, ymid] = cv._crop || (cv._crop = cropFor(cropFrames || fr));
-    const keep = { ctx, s, cssW, cssH, frames, cur, selected, hover, playing, t, pad: { ...PAD }, previewMode };
+    const keep = { ctx, s, sBase, zoom, cssW, cssH, frames, cur, selected, hover, playing, t, pad: { ...PAD }, view: { ...view }, previewMode };
     try {
-      ctx = cv.getContext('2d'); previewMode = true;
+      ctx = cv.getContext('2d'); previewMode = true; zoom = 1; view.x = 0; view.top = W;
       Object.assign(PAD, { l: 0, r: 0, t: 0, b: 0 });
       const pad = 6;
       s = cover ? (w - pad * 2) / (x1 - x0) : Math.min((w - pad * 2) / (x1 - x0), (h - pad * 2) / W);
@@ -1760,8 +1869,8 @@ puck 54,15 shot
       draw();
     } finally {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ({ ctx, s, cssW, cssH, frames, cur, selected, hover, playing, t, previewMode } = keep);
-      Object.assign(PAD, keep.pad);
+      ({ ctx, s, sBase, zoom, cssW, cssH, frames, cur, selected, hover, playing, t, previewMode } = keep);
+      Object.assign(PAD, keep.pad); Object.assign(view, keep.view);
     }
   }
 
@@ -1971,6 +2080,19 @@ puck 54,15 shot
     setLineup(true);
   });
 
+  // ---------- Rink zoom ----------
+  function updateZoomUI() {
+    const b = $('zoomReset');
+    b.textContent = Math.round(zoom * 100) + '%';
+    b.classList.toggle('zoomed', zoom > 1.001);
+    $('zoomOut').disabled = zoom <= 1.001;
+    $('zoomIn').disabled = zoom >= ZOOM_MAX - 0.001;
+  }
+  function resetZoom() { zoom = 1; s = sBase; view.x = 0; view.top = W; updateZoomUI(); draw(); }
+  $('zoomIn').addEventListener('click', () => zoomAt(1.4));
+  $('zoomOut').addEventListener('click', () => zoomAt(1 / 1.4));
+  $('zoomReset').addEventListener('click', resetZoom);
+
   // ---------- Transport buttons ----------
   $('playBtn').addEventListener('click', togglePlay);
   $('prevBtn').addEventListener('click', () => step(-1));
@@ -2008,6 +2130,9 @@ puck 54,15 shot
     if (e.key === '.') { step(1); return; }
     if (e.key === 's' || e.key === 'S') { setDrawer(!drawerOpen()); return; }
     if (e.key === 'b' || e.key === 'B') { toggleBack(); return; }
+    if (e.key === '+' || e.key === '=') { zoomAt(1.4); return; }
+    if (e.key === '-' || e.key === '_') { zoomAt(1 / 1.4); return; }
+    if (e.key === '0') { resetZoom(); return; }
     if (e.key === 'w' || e.key === 'W') { addViaMid(); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && selected && selected !== 'P' && !playing) { e.preventDefault(); setOnIce(selected, false); return; }
     const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key];
@@ -2023,6 +2148,10 @@ puck 54,15 shot
     }
   });
 
+  // iOS Safari ignores the viewport's no-zoom setting: block its pinch gestures outside the rink too
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+
   // ---------- Theme and sizing ----------
   const mq = matchMedia('(prefers-color-scheme: dark)');
   const retheme = () => { readColors(); draw(); };
@@ -2031,7 +2160,7 @@ puck 54,15 shot
   const ro = new ResizeObserver(resize); ro.observe(stageEl); ro.observe(document.getElementById('bottomFloat')); ro.observe(document.querySelector('.top-float'));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
 
-  readColors(); setDrawer(false); syncScript(true); refreshUI(); resize();
+  readColors(); setDrawer(false); syncScript(true); refreshUI(); resize(); updateZoomUI();
   requestAnimationFrame(() => { layoutReady = true; });
 })();
 </script>
