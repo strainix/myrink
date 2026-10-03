@@ -1252,15 +1252,15 @@ puck 54,15 shot
     ctx.font = `${fs}px "JetBrains Mono", monospace`;
     const step = s >= 28 ? 1 : 5;
     const bottom = oy + W * sBase, right = ox + L * sBase;
-    const pills = zoom > 1.001;
+    const pills = zoom > 1.001;   // zoomed in: numbers sit over the ice and get a glow
     const label = (txt, x, y, align) => {
       const w = ctx.measureText(txt).width;
-      const bx = align === 'center' ? x - w / 2 : x - w;
       if (pills) {
-        const ph = fs + 6, pw = w + 8, r = ph / 2;
+        // over the ice: a soft white glow behind the number keeps it readable on lines and markings
         ctx.save();
-        ctx.fillStyle = 'rgba(255,255,255,0.88)'; ctx.strokeStyle = 'rgba(22,35,47,0.12)'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.roundRect(bx - 4, y - ph / 2, pw, ph, r); ctx.fill(); ctx.stroke();
+        ctx.shadowColor = 'rgba(255,255,255,0.95)'; ctx.shadowBlur = 5;
+        ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.strokeText(txt, x, y);
         ctx.restore();
       }
       ctx.fillStyle = pills ? C.fg : C.muted;
