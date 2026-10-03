@@ -330,6 +330,7 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
             <button role="menuitem" id="sampleBtn">Load sample breakout</button>
             <button role="menuitem" id="faceoffBtn">New play from faceoff</button>
             <button role="menuitem" id="installBtn" hidden>Install app</button>
+            <button role="menuitem" id="fullscreenBtn" hidden>Full screen</button>
             <hr>
             <button role="menuitem" id="helpBtn">Legend and shortcuts</button>
           </div>
@@ -1369,6 +1370,28 @@ puck 54,15 shot
     frames = [{ name: 'Faceoff', pos: clone(FACEOFF), puck: { at: [29, 14] } }];
     cur = 0; selected = null; playing = false; syncScript(true); changed();
   });
+
+  // ---------- Full screen (hides browser bars, and the status/navigation bars on Android) ----------
+  const fsBtn = $('fullscreenBtn');
+  const docEl = document.documentElement;
+  const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+  const canFullscreen = !!(docEl.requestFullscreen || docEl.webkitRequestFullscreen) &&
+    (document.fullscreenEnabled || document.webkitFullscreenEnabled) &&
+    !matchMedia('(display-mode: fullscreen)').matches;
+  fsBtn.hidden = !canFullscreen;
+  const syncFsLabel = () => { fsBtn.textContent = fsElement() ? 'Exit full screen' : 'Full screen'; };
+  fsBtn.addEventListener('click', async () => {
+    setMenu(false);
+    try {
+      if (fsElement()) await (document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen());
+      else if (docEl.requestFullscreen) await docEl.requestFullscreen({ navigationUI: 'hide' });
+      else docEl.webkitRequestFullscreen();
+    } catch (e) {
+      flashBoard("Full screen isn't available here");
+    }
+  });
+  document.addEventListener('fullscreenchange', syncFsLabel);
+  document.addEventListener('webkitfullscreenchange', syncFsLabel);
 
   // ---------- Transport buttons ----------
   $('playBtn').addEventListener('click', togglePlay);

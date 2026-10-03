@@ -13,6 +13,8 @@ It's a static site with no build step, and an installable app (PWA): it works of
 - **Android / Chrome / Edge:** open the site, then ⋯ menu in the app → **Install app** (or the install icon in the address bar).
 - **iPhone / iPad:** open the site in Safari → Share → **Add to Home Screen**. The app's ⋯ menu shows these steps too.
 
+On Android the installed app opens full screen (no status or navigation bar). In a browser, ⋯ → **Full screen** does the same where the browser supports it. iOS always keeps its status bar.
+
 ## Updating
 
 After changing files, bump `VERSION` in `sw.js` (e.g. `v1` → `v2`) so installed apps fetch the new version.

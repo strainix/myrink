@@ -1,6 +1,6 @@
 // Rink Grid service worker: makes the app open offline.
 // Bump VERSION whenever you deploy a change so installed apps pick it up.
-const VERSION = 'v2';
+const VERSION = 'v3';
 const SHELL = `rinkgrid-shell-${VERSION}`;
 const FONTS = 'rinkgrid-fonts';
 
