@@ -19,8 +19,8 @@ ARD 38,20
 puck 3,3
 
 frame Retrieve
-HRD 3,5
-HLD 1,18
+HRD 2,5
+HLD 1,17
 AC  6,7
 ALW 12,3
 ARW 15,14
@@ -30,8 +30,7 @@ HRW 16,2
 puck HRD
 
 frame Over
-HLD 3,21
-HRD 4,8
+HLD 1,20
 HC  9,19
 HLW 15,28
 AC  6,9
@@ -40,7 +39,8 @@ ARW 13,16
 puck HLD
 
 frame Up the far wall
-HLD 6,24
+HLD 5,23
+HRD 4,8
 HLW 17,28
 HC  13,21
 HRW 18,9 via 16,4

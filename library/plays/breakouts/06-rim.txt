@@ -31,7 +31,7 @@ frame Rim
 HRW 16,1
 HC  13,6
 HRD 4,6
-AC  4,4
+AC  5,7
 ALD 22,4
 HLW 20,18
 puck HRW

@@ -28,7 +28,7 @@ puck HRD
 
 frame Start the wheel
 HRD 1,13 via 1,8
-AC  2,8 via 4,5
+AC  3,8 via 4,5
 HLD 7,9
 HC  10,10
 HRW 15,2
@@ -36,7 +36,7 @@ HLW 17,22
 puck HRD
 
 frame Reverse
-AC  2,14
+AC  2,11
 HLD 4,5
 HC  9,8
 HRW 16,1
@@ -48,7 +48,7 @@ HRD 2,19
 HLD 7,5
 HRW 17,2
 HC  13,6
-AC  3,10
+AC  4,9
 HLW 20,19
 puck HRW
 

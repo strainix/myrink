@@ -556,7 +556,7 @@ x 0–59 left → right, y 0–29 bottom → top</pre>
   const SAMPLE = `# Breakout: D-to-D, up the strong-side wall, middle-lane entry
 frame Retrieve
 HG  4,14
-HLD 2,17
+HLD 1,17
 HRD 7,8
 HC  9,14
 HLW 18,25
@@ -570,7 +570,7 @@ ARD 30,20
 puck HLD
 
 frame D to D
-HRD 4,9
+HRD 1,10
 HC  10,12
 HLW 20,26
 HRW 16,2
@@ -603,12 +603,12 @@ ARD 34,20 back
 puck HC
 
 frame Zone entry
-HC  40,12
+HC  37,12
 HLW 42,22 via 36,25
-HRW 41,4
+HRW 38,4
 HLD 24,19
 HRD 24,8
-AC  32,13
+AC  27,12
 ALW 30,6
 ARW 32,22
 ALD 46,11 back
@@ -1567,7 +1567,7 @@ puck 54,15 shot
   const LIBRARY_BASE = window.MYRINK_LIBRARY_BASE || 'https://raw.githubusercontent.com/strainix/myrink/main/library/';
   let library = null, libCat = null, libOpenId = null, libLoading = false;
   const libEl = $('libBody'), libCatsEl = $('libCats');
-  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function esc(t) { return String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
   function libState(html, error) { libCatsEl.innerHTML = ''; libEl.innerHTML = `<div class="lib-state${error ? ' error' : ''}">${html}</div>`; }
   async function loadLibrary(force) {
     if (libLoading || (library && !force)) { renderLibrary(); return; }
