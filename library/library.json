@@ -1,0 +1,110 @@
+{
+  "format": 1,
+  "name": "myrink library",
+  "updated": "2026-10-03",
+  "categories": [
+    {
+      "id": "breakouts",
+      "title": "Breakouts",
+      "description": "Getting the puck out of the defensive zone under different forechecks."
+    }
+  ],
+  "plays": [
+    {
+      "id": "breakout-up-the-wall",
+      "category": "breakouts",
+      "title": "Up the wall",
+      "strength": "5v5",
+      "when": "Wall open, F1 on the D. The default first option.",
+      "tags": [
+        "wall",
+        "strong side"
+      ],
+      "file": "plays/breakouts/01-up-the-wall.txt"
+    },
+    {
+      "id": "breakout-low-centre",
+      "category": "breakouts",
+      "title": "Up to low centre",
+      "strength": "5v5",
+      "when": "F2 sits on our wall winger. Short middle outlet to the swinging centre.",
+      "tags": [
+        "centre support",
+        "middle"
+      ],
+      "file": "plays/breakouts/02-up-to-low-centre.txt"
+    },
+    {
+      "id": "breakout-over",
+      "category": "breakouts",
+      "title": "Over (D-to-D)",
+      "strength": "5v5",
+      "when": "Strong side flooded. Change sides behind the net and go up the far wall.",
+      "tags": [
+        "d-to-d",
+        "weak side"
+      ],
+      "file": "plays/breakouts/03-over-d-to-d.txt"
+    },
+    {
+      "id": "breakout-wheel",
+      "category": "breakouts",
+      "title": "Wheel",
+      "strength": "5v5",
+      "when": "D1 has speed and no pressure low. Carry behind the net, D2 is the pick.",
+      "tags": [
+        "carry",
+        "behind the net"
+      ],
+      "file": "plays/breakouts/04-wheel.txt"
+    },
+    {
+      "id": "breakout-reverse",
+      "category": "breakouts",
+      "title": "Reverse",
+      "strength": "5v5",
+      "when": "F1 follows the wheel tight. Bank it off the end boards back to D2.",
+      "tags": [
+        "bank pass",
+        "behind the net"
+      ],
+      "file": "plays/breakouts/05-reverse.txt"
+    },
+    {
+      "id": "breakout-rim",
+      "category": "breakouts",
+      "title": "Rim up the wall",
+      "strength": "5v5",
+      "when": "No time for a clean pass. Rim it, the winger bumps to the centre.",
+      "tags": [
+        "rim",
+        "pressure"
+      ],
+      "file": "plays/breakouts/06-rim.txt"
+    },
+    {
+      "id": "breakout-stretch",
+      "category": "breakouts",
+      "title": "Stretch",
+      "strength": "5v5",
+      "when": "Two forecheckers deep. Over, then a long pass to the flying weak-side wing.",
+      "tags": [
+        "stretch pass",
+        "d-to-d"
+      ],
+      "file": "plays/breakouts/07-stretch.txt"
+    },
+    {
+      "id": "breakout-five-man",
+      "category": "breakouts",
+      "title": "Five-man exit",
+      "strength": "5v5",
+      "when": "Controlled exit with numbers. Centre through the middle, D1 jumps up.",
+      "tags": [
+        "controlled exit",
+        "d activation"
+      ],
+      "file": "plays/breakouts/08-five-man-d-activation.txt"
+    }
+  ]
+}

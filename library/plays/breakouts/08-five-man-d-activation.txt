@@ -1,0 +1,68 @@
+# BREAKOUT 8 · FIVE-MAN EXIT (D-to-D, centre through the middle, D1 jumps up)
+# Use when: you want a controlled exit with numbers. After going over, D1 does
+# not stay home: he activates up his lane as a fourth attacker while the centre
+# carries through the middle. Weak-side forward covers high if D1 gets caught.
+
+frame Dump-in
+HG  4,14
+HRD 9,9
+HLD 6,18
+HC  9,12
+HRW 12,3
+HLW 13,23
+AG  55,14
+AC  12,8
+ALW 15,5
+ARW 20,19
+ALD 38,9
+ARD 38,20
+puck 3,3
+
+frame Retrieve
+HRD 2,5
+HLD 1,17
+AC  7,7
+ALW 13,3
+HC  8,16
+HRW 17,7
+HLW 16,26
+puck HRD
+
+frame Over
+HLD 1,19
+HC  9,17
+HRW 19,9
+HLW 18,26
+AC  4,11
+puck HLD
+
+frame Centre through the middle
+HC  12,13 via 10,16
+HLD 6,21
+HRD 12,4
+HRW 24,10
+HLW 23,25
+AC  5,17
+ALW 16,5
+ARW 18,17
+puck HC
+
+frame Carry and activate
+HC  22,13
+HRD 23,4
+HRW 31,9
+HLW 31,24
+HLD 13,19
+ALD 37,8 back
+ARD 37,19 back
+ALW 20,6
+puck HC
+
+frame Hit the jumping D
+HC  29,14
+HRD 33,4
+HRW 39,10
+HLW 38,23
+ALD 41,10 back
+ARD 41,18 back
+puck HRD

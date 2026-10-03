@@ -1,0 +1,63 @@
+# BREAKOUT 1 · UP (strong-side wall)
+# Use when: the wall is open and F1 is on the D. The default first option.
+# D1 retrieves, strong-side wing gives a target on the wall between the top of
+# the circle and the blue line, centre stays low under the puck, weak-side wing
+# slashes through the middle for width and speed.
+
+frame Dump-in
+HG  4,14
+HRD 8,8
+HLD 6,18
+HC  9,12
+HRW 12,3
+HLW 13,23
+AG  55,14
+AC  12,8
+ALW 18,5
+ARW 20,20
+ALD 38,9
+ARD 38,20
+puck 3,3
+
+frame Retrieve
+HRD 3,4
+HRW 15,1
+HC  8,9
+HLW 15,21
+HLD 4,17
+AC  7,6
+ALW 16,4
+puck HRD
+
+frame Up the wall
+HRD 5,6
+HRW 16,1
+HC  12,6 via 10,8
+HLW 21,16 via 18,20
+AC  5,5
+ALW 18,3
+puck HRW
+
+frame Exit
+HRW 24,3
+HC  21,8
+HLW 29,14 via 25,16
+HRD 12,5
+HLD 12,16
+AC  10,7
+ALW 21,4
+ARW 26,18
+ALD 36,7 back
+ARD 36,16 back
+puck HRW
+
+frame Speed through neutral
+HRW 32,3
+HC  30,9
+HLW 39,15
+HRD 20,6
+HLD 20,15
+ALD 40,8 back
+ARD 41,14 back
+ARW 30,16
+puck HLW

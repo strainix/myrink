@@ -11,9 +11,9 @@
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Rink Grid">
+<meta name="apple-mobile-web-app-title" content="myrink">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Rink Grid</title>
+<title>myrink</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -120,7 +120,7 @@ canvas#rink.grabbing { cursor: grabbing; }
 .board-toast {
   position: absolute; z-index: 25; left: 50%; transform: translateX(-50%);
   background: var(--fg); color: #fff; font-size: 13px; padding: 6px 12px; border-radius: 8px;
-  box-shadow: var(--float-shadow); pointer-events: none; white-space: nowrap;
+  box-shadow: var(--float-shadow); pointer-events: none; max-width: calc(100% - 32px); text-align: center;
 }
 .cellpos {
   position: absolute; z-index: 15; pointer-events: none;
@@ -252,6 +252,26 @@ details.syntax b { color: var(--fg); font-weight: 500; }
 .modal-head { display: flex; justify-content: space-between; align-items: center; }
 .modal h3 { font: 600 11px var(--font-body); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 4px 0 0; }
 .modal ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.library-modal { width: min(560px, 100%); }
+.lib-cats { display: flex; gap: 6px; flex-wrap: wrap; }
+.lib-cats:empty { display: none; }
+.lib-cat { border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 999px; padding: 5px 12px; font: 500 13px var(--font-body); cursor: pointer; }
+.lib-cat[aria-selected="true"] { background: var(--fg); border-color: var(--fg); color: var(--panel); }
+.lib-cat .n { font: 11px var(--font-mono); opacity: 0.6; margin-left: 4px; }
+.lib-desc { margin: 0; font-size: 13px; color: var(--muted); }
+.lib-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.lib-item { border: 1px solid var(--line); border-radius: 10px; }
+.lib-item[data-open="true"] { border-color: var(--muted); }
+.lib-row { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: baseline; text-align: left; background: none; border: 0; padding: 10px 12px; cursor: pointer; color: var(--fg); font: inherit; }
+.lib-title { font: 700 1.05rem/1.2 var(--font-display); letter-spacing: 0.02em; }
+.lib-strength { font: 500 11px var(--font-mono); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; }
+.lib-when { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+.lib-detail { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0 12px 12px; }
+.lib-tag { font-size: 12px; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 2px 8px; }
+.lib-detail .btn { margin-left: auto; }
+.lib-state { font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.lib-state.error { color: var(--warn); }
+.lib-note { margin: 0; font-size: 12px; color: var(--muted); }
 .lineup-note, .lineup-count { margin: 0; font-size: 13px; color: var(--muted); }
 .lineup-count { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .lineup-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -338,6 +358,8 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
             <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128Zm56-12a12,12,0,1,0,12,12A12,12,0,0,0,196,116ZM60,116a12,12,0,1,0,12,12A12,12,0,0,0,60,116Z"/></svg>
           </button>
           <div class="menu" id="menu" role="menu" hidden>
+            <button role="menuitem" id="libraryBtn">Library</button>
+            <hr>
             <button role="menuitem" id="sampleBtn">Load sample breakout</button>
             <button role="menuitem" id="faceoffBtn">New play from faceoff</button>
             <button role="menuitem" id="installBtn" hidden>Install app</button>
@@ -424,6 +446,17 @@ x 0–59 left → right, y 0–29 bottom → top</pre>
       </div>
     </div>
   </aside>
+</div>
+
+<div class="modal-back" id="library" hidden>
+  <div class="modal library-modal scroll-subtle" role="dialog" aria-modal="true" aria-labelledby="libraryTitle">
+    <div class="modal-head">
+      <h2 id="libraryTitle">Library</h2>
+      <button class="btn ghost icon" id="libraryClose" aria-label="Close"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
+    </div>
+    <div class="lib-cats" id="libCats" role="tablist" aria-label="Categories"></div>
+    <div class="lib-body" id="libBody"></div>
+  </div>
 </div>
 
 <div class="modal-back" id="lineup" hidden>
@@ -718,7 +751,7 @@ puck 54,15 shot
   const isBack = (f, id) => Array.isArray(f.back) && f.back.includes(id);
   function toScript(frames) {
     const out = [
-      '# Rink Grid script · 1 cell = 1 m',
+      '# myrink script · 1 cell = 1 m',
       '# x 0–59 left → right, y 0–29 bottom → top. Home (H…) attacks right.',
       '# Only players listed here are on the ice. "ID off" takes one off.',
       ''
@@ -753,12 +786,12 @@ puck 54,15 shot
 
   function load() {
     try {
-      const s = localStorage.getItem('rinkgrid.v1');
+      const s = localStorage.getItem('myrink.v1') || localStorage.getItem('rinkgrid.v1');
       if (s) { const f = JSON.parse(s); if (Array.isArray(f) && f.length) return f; }
     } catch (e) {}
     return parse(SAMPLE).frames;
   }
-  function save() { try { localStorage.setItem('rinkgrid.v1', JSON.stringify(frames)); } catch (e) {} }
+  function save() { try { localStorage.setItem('myrink.v1', JSON.stringify(frames)); } catch (e) {} }
   frames = load();
 
   // ---------- Canvas ----------
@@ -1529,6 +1562,87 @@ puck 54,15 shot
   document.addEventListener('fullscreenchange', syncFsLabel);
   document.addEventListener('webkitfullscreenchange', syncFsLabel);
 
+  // ---------- Library ----------
+  // Plays live in a GitHub repo: library.json lists categories and plays, each play is a script file.
+  const LIBRARY_BASE = window.MYRINK_LIBRARY_BASE || 'https://raw.githubusercontent.com/strainix/myrink/main/library/';
+  let library = null, libCat = null, libOpenId = null, libLoading = false;
+  const libEl = $('libBody'), libCatsEl = $('libCats');
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function libState(html, error) { libCatsEl.innerHTML = ''; libEl.innerHTML = `<div class="lib-state${error ? ' error' : ''}">${html}</div>`; }
+  async function loadLibrary(force) {
+    if (libLoading || (library && !force)) { renderLibrary(); return; }
+    libLoading = true;
+    libState('Loading the library…');
+    try {
+      const res = await fetch(LIBRARY_BASE + 'library.json', { cache: 'no-cache' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (!Array.isArray(data.plays) || !Array.isArray(data.categories)) throw new Error('library.json is missing categories or plays');
+      library = data;
+      const used = library.categories.filter(c => library.plays.some(p => p.category === c.id));
+      if (!libCat || !used.some(c => c.id === libCat)) libCat = used.length ? used[0].id : null;
+    } catch (e) {
+      library = null;
+      libState(`<span>Couldn't load the library. Check your connection and try again.</span>
+        <button class="btn" id="libRetry">Try again</button>
+        <p class="lib-note">${esc(e.message || e)} · ${esc(LIBRARY_BASE)}</p>`, true);
+      const r = $('libRetry'); if (r) r.addEventListener('click', () => loadLibrary(true));
+      libLoading = false;
+      return;
+    }
+    libLoading = false;
+    renderLibrary();
+  }
+  function renderLibrary() {
+    if (!library) return;
+    const used = library.categories.filter(c => library.plays.some(p => p.category === c.id));
+    libCatsEl.innerHTML = used.length > 1 ? used.map(c =>
+      `<button class="lib-cat" role="tab" data-cat="${esc(c.id)}" aria-selected="${c.id === libCat}">${esc(c.title)}<span class="n">${library.plays.filter(p => p.category === c.id).length}</span></button>`).join('') : '';
+    libCatsEl.querySelectorAll('.lib-cat').forEach(b => b.addEventListener('click', () => { libCat = b.dataset.cat; libOpenId = null; renderLibrary(); }));
+    const cat = used.find(c => c.id === libCat);
+    if (!cat) { libState('The library is empty for now.'); return; }
+    const plays = library.plays.filter(p => p.category === cat.id);
+    libEl.innerHTML = `${used.length === 1 ? `<p class="lib-desc"><b>${esc(cat.title)}</b> · ${esc(cat.description || '')}</p>` : `<p class="lib-desc">${esc(cat.description || '')}</p>`}
+      <ul class="lib-list">${plays.map(p => `
+        <li class="lib-item" data-open="${p.id === libOpenId}">
+          <button class="lib-row" data-id="${esc(p.id)}" aria-expanded="${p.id === libOpenId}">
+            <span class="lib-title">${esc(p.title)}</span>
+            ${p.strength ? `<span class="lib-strength">${esc(p.strength)}</span>` : '<span></span>'}
+            ${p.when ? `<span class="lib-when">${esc(p.when)}</span>` : ''}
+          </button>
+          ${p.id === libOpenId ? `<div class="lib-detail">
+            ${(p.tags || []).map(t => `<span class="lib-tag">${esc(t)}</span>`).join('')}
+            <button class="btn primary" data-open="${esc(p.id)}">Open play</button>
+          </div>` : ''}
+        </li>`).join('')}
+      </ul>
+      <p class="lib-note">Opening a play replaces the one on the board.</p>`;
+    libEl.querySelectorAll('.lib-row').forEach(b => b.addEventListener('click', () => { libOpenId = libOpenId === b.dataset.id ? null : b.dataset.id; renderLibrary(); }));
+    libEl.querySelectorAll('[data-open]').forEach(b => { if (b.tagName === 'BUTTON') b.addEventListener('click', () => openLibraryPlay(b.dataset.open, b)); });
+  }
+  async function openLibraryPlay(id, btn) {
+    const play = library.plays.find(p => p.id === id);
+    if (!play) return;
+    btn.disabled = true; btn.textContent = 'Opening…';
+    try {
+      const res = await fetch(LIBRARY_BASE + play.file, { cache: 'no-cache' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const { frames: f, errors } = parse(await res.text());
+      if (errors.length) throw new Error(errors[0]);
+      frames = f; cur = 0; selected = null; playing = false;
+      syncScript(true); changed();
+      setLibrary(false);
+      flashBoard(`Opened “${play.title}”`);
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Open play';
+      flashBoard(`Couldn't open “${play.title}”: ${e.message || e}`);
+    }
+  }
+  function setLibrary(open) { $('library').hidden = !open; if (open) { loadLibrary(false); $('libraryClose').focus(); } }
+  $('libraryBtn').addEventListener('click', () => { setMenu(false); setLibrary(true); });
+  $('libraryClose').addEventListener('click', () => setLibrary(false));
+  $('library').addEventListener('click', e => { if (e.target.id === 'library') setLibrary(false); });
+
   // ---------- Players on ice ----------
   // Putting a player on or off applies from the current frame to the end of the play.
   function freeCellNear(F, c) {
@@ -1614,6 +1728,7 @@ puck 54,15 shot
     if (e.key === 'Escape') {
       if (!$('help').hidden) { setHelp(false); return; }
       if (!$('lineup').hidden) { setLineup(false); return; }
+      if (!$('library').hidden) { setLibrary(false); return; }
       if (!menuEl.hidden) { setMenu(false); menuBtn.focus(); return; }
       if (drawerOpen() && e.target !== scriptEl) { setDrawer(false); return; }
     }
@@ -1655,13 +1770,13 @@ puck 54,15 shot
 <div class="modal-back" id="installHelp" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="installTitle">
     <div class="modal-head">
-      <h2 id="installTitle">Install Rink Grid</h2>
+      <h2 id="installTitle">Install myrink</h2>
       <button class="btn ghost icon" id="installClose" aria-label="Close"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
     </div>
     <ul>
       <li>Tap the <b>Share</b> button in Safari's toolbar.</li>
       <li>Choose <b>Add to Home Screen</b>, then <b>Add</b>.</li>
-      <li>Rink Grid then opens full screen from your home screen and works offline.</li>
+      <li>myrink then opens full screen from your home screen and works offline.</li>
     </ul>
   </div>
 </div>

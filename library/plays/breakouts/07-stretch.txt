@@ -1,0 +1,61 @@
+# BREAKOUT 7 · STRETCH (D-to-D, long pass to the weak-side wing)
+# Use when: the forecheck commits two forwards deep on the strong side.
+# D1 goes over to D2; the weak-side wing has already left the zone wide and
+# takes a long pass before the far blue line. Legal under IIHF rules: there is
+# no two-line pass offside, only the far blue line counts.
+
+frame Dump-in
+HG  4,14
+HRD 9,9
+HLD 6,18
+HC  9,12
+HRW 12,3
+HLW 16,25
+AG  55,14
+AC  12,8
+ALW 15,5
+ARW 18,17
+ALD 40,9
+ARD 40,20
+puck 3,3
+
+frame Retrieve
+HRD 2,5
+HLD 1,17
+AC  7,7
+ALW 12,3
+ARW 14,15
+HLW 20,27
+HC  9,15
+HRW 15,3
+puck HRD
+
+frame Over
+HLD 1,19
+HLW 27,27
+HC  10,17
+AC  4,10
+ARW 12,17
+ARD 38,21 back
+puck HLD
+
+frame Stretch pass
+HLD 6,22
+HRD 6,8
+HLW 36,26
+HC  16,18
+HRW 22,6
+AC  4,17
+ARW 10,19
+ARD 40,23 back
+ALD 42,13 back
+puck HLW
+
+frame Attack
+HLW 45,23
+HC  29,17
+HRW 33,7
+HLD 14,21
+ARD 47,20 back
+ALD 46,12 back
+puck HLW

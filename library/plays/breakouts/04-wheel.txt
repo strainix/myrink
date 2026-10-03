@@ -1,0 +1,59 @@
+# BREAKOUT 4 · WHEEL
+# Use when: D1 has speed and there is no pressure low yet.
+# D1 picks the puck up and wheels behind the net, using the cage and D2 as a
+# screen ("pick") against F1, then comes out the weak side with options to the
+# weak-side wall, the low centre, or skating it.
+
+frame Dump-in
+HG  4,14
+HRD 9,9
+HLD 6,17
+HC  9,12
+HRW 12,3
+HLW 13,23
+AG  55,14
+AC  16,10
+ALW 20,5
+ARW 22,19
+ALD 38,9
+ARD 38,20
+puck 3,3
+
+frame Pick up
+HRD 3,4
+AC  9,8
+HLD 5,16
+HC  8,17
+HLW 15,26
+HRW 15,4
+puck HRD
+
+frame Wheel
+HRD 1,18 via 1,9 1,14
+AC  4,11 via 4,8
+HLD 5,15
+HC  9,20
+HLW 16,27
+HRW 18,10
+puck HRD
+
+frame Outlet
+HRD 8,24
+HLW 17,27
+HC  14,20
+HRW 22,13
+AC  4,17
+ALW 18,8
+ARW 20,20
+puck HLW
+
+frame Exit
+HLW 26,26
+HC  24,19
+HRW 32,13
+HRD 16,22
+HLD 12,14
+ALD 37,11 back
+ARD 36,21 back
+ARW 22,22
+puck HLW

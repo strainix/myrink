@@ -1,12 +1,19 @@
-# Rink Grid
+# myrink
 
 Ice hockey tactics board on a 60 × 30 m Swiss rink (IIHF surface, 8.5 m corners) with a one-metre coordinate grid.
 
 - Drag players and the puck, build a play frame by frame, press Play.
 - Arrows follow the usual playbook legend: skate, skate with puck, pass/dump, shot, skate backwards, opponent greyed out.
-- Every play is also a small script (open **Script**), e.g. `HC 40,12 via 30,8` or `puck 54,15 shot`.
+- Every play is also a small script (open **Script**), e.g. `HC 40,12 via 30,8`, `puck HLD via 0,9` (bank pass) or `HLW off`.
+- **⋯ → Library** opens ready-made plays from the [`library/`](library/) folder of this repo.
 
 It's a static site with no build step, and an installable app (PWA): it works offline and can be added to the home screen or desktop. Plays are saved in the browser (localStorage).
+
+## Library
+
+The app fetches `library/library.json` and the play scripts straight from GitHub
+(`raw.githubusercontent.com/strainix/myrink/main/library/`), so pushing a new play to `main`
+makes it show up in the app without a redeploy. See [`library/README.md`](library/README.md) for how to add plays.
 
 ## Install as an app
 
@@ -15,22 +22,21 @@ It's a static site with no build step, and an installable app (PWA): it works of
 
 On Android the installed app opens full screen (no status or navigation bar). In a browser, ⋯ → **Full screen** does the same where the browser supports it. iOS always keeps its status bar.
 
-## Updating
-
-After changing files, bump `VERSION` in `sw.js` (e.g. `v1` → `v2`) so installed apps fetch the new version.
-
 ## Deploy on Cloudflare Pages
 
 1. Workers & Pages → Create → Pages → Connect to Git → pick this repo.
 2. Framework preset: **None**. Build command: *(leave empty)*. Build output directory: `/`.
 3. Save and Deploy. Every push to `main` redeploys.
 
+After changing the app, bump `VERSION` in `sw.js` (e.g. `v5` → `v6`) so installed apps fetch the new version.
+
 ## Files
 
 - `index.html` – the app
 - `manifest.webmanifest`, `icons/` – app name and icons
-- `sw.js` – offline support
+- `sw.js` – offline support (also keeps the last library copy for offline use)
 - `_headers` – Cloudflare Pages cache headers
+- `library/` – the play library
 
 ## Credits
 

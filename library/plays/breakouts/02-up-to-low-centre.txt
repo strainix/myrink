@@ -1,0 +1,62 @@
+# BREAKOUT 2 · UP TO LOW CENTRE (middle support)
+# Use when: the opposing F2 sits on our wall winger, so the wall pass is gone.
+# The centre stays "low and slow", swings under the puck through the strong-side
+# slot and takes the short middle outlet. The wall winger pulls the F2 high.
+
+frame Dump-in
+HG  4,14
+HRD 8,8
+HLD 6,18
+HC  9,12
+HRW 12,3
+HLW 13,23
+AG  55,14
+AC  12,8
+ALW 16,4
+ARW 20,20
+ALD 38,9
+ARD 38,20
+puck 3,3
+
+frame Retrieve
+HRD 3,4
+HRW 16,2
+ALW 15,3
+HC  9,10
+HLW 16,22
+HLD 4,17
+AC  7,6
+puck HRD
+
+frame Centre support
+HC  9,7 via 10,9
+HRW 18,2
+ALW 17,3
+HRD 4,6
+AC  4,4
+HLW 21,20
+puck HC
+
+frame Middle drive
+HC  20,11 via 14,9
+HLW 27,20 via 24,22
+HRW 23,4
+HRD 11,6
+HLD 11,16
+ALW 17,4
+AC  9,7
+ARW 25,17
+ALD 36,9 back
+ARD 36,19 back
+puck HC
+
+frame Attack
+HC  30,13
+HLW 34,22
+HRW 31,4
+HRD 19,7
+HLD 19,15
+ALD 39,10 back
+ARD 39,18 back
+ARW 28,15
+puck HLW

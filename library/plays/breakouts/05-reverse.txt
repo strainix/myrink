@@ -1,0 +1,64 @@
+# BREAKOUT 5 · REVERSE
+# Use when: D1 starts a wheel but F1 follows him tight behind the net.
+# D2 calls "reverse" and slides into the strong-side corner; D1 banks the puck
+# back off the end boards behind the forechecker (bank point at 0,9). The play goes back up the
+# side the forecheck just left.
+
+frame Dump-in
+HG  4,14
+HRD 9,9
+HLD 6,18
+HC  9,12
+HRW 12,3
+HLW 13,23
+AG  55,14
+AC  14,9
+ALW 19,6
+ARW 21,19
+ALD 38,9
+ARD 38,20
+puck 3,3
+
+frame Retrieve
+HRD 3,4
+AC  8,6
+HLD 6,15
+HC  9,13
+puck HRD
+
+frame Start the wheel
+HRD 1,13 via 1,8
+AC  2,8 via 4,5
+HLD 7,9
+HC  10,10
+HRW 15,2
+HLW 17,22
+puck HRD
+
+frame Reverse
+AC  2,14
+HLD 4,5
+HC  9,8
+HRW 16,1
+ALW 17,8
+puck HLD via 0,9
+
+frame Up the wall
+HRD 2,19
+HLD 7,5
+HRW 17,2
+HC  13,6
+AC  3,10
+HLW 20,19
+puck HRW
+
+frame Exit
+HRW 25,4
+HC  22,9
+HLW 30,16 via 24,19
+HLD 14,5
+HRD 13,15
+ALW 18,6
+ALD 36,8 back
+ARD 36,18 back
+puck HRW

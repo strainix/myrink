@@ -1,6 +1,6 @@
 {
-  "name": "Rink Grid",
-  "short_name": "Rink Grid",
+  "name": "myrink",
+  "short_name": "myrink",
   "description": "Ice hockey tactics board on a 60 × 30 m Swiss rink with a one-metre grid.",
   "id": "/",
   "start_url": "/",

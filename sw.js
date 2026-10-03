@@ -1,8 +1,9 @@
-// Rink Grid service worker: makes the app open offline.
+// myrink service worker: makes the app open offline.
 // Bump VERSION whenever you deploy a change so installed apps pick it up.
-const VERSION = 'v4';
-const SHELL = `rinkgrid-shell-${VERSION}`;
-const FONTS = 'rinkgrid-fonts';
+const VERSION = 'v5';
+const SHELL = `myrink-shell-${VERSION}`;
+const FONTS = 'myrink-fonts';
+const LIBRARY = 'myrink-library';
 
 const SHELL_FILES = [
   '/',
@@ -21,7 +22,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k.startsWith('rinkgrid-shell-') && k !== SHELL).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => (k.startsWith('myrink-shell-') || k.startsWith('rinkgrid-')) && k !== SHELL).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -37,6 +38,16 @@ self.addEventListener('fetch', event => {
       fetch(req)
         .then(res => { const copy = res.clone(); caches.open(SHELL).then(c => c.put('/index.html', copy)); return res; })
         .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // Play library on GitHub: always try for the latest, fall back to the last copy offline.
+  if (url.hostname === 'raw.githubusercontent.com' || url.hostname === 'cdn.jsdelivr.net') {
+    event.respondWith(
+      fetch(req)
+        .then(res => { if (res.ok) { const copy = res.clone(); caches.open(LIBRARY).then(c => c.put(req.url, copy)); } return res; })
+        .catch(() => caches.match(req.url, { cacheName: LIBRARY }).then(hit => hit || Response.error()))
     );
     return;
   }
