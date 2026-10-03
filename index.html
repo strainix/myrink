@@ -1061,10 +1061,12 @@ puck 54,15 shot
     return cellW(frame.puck.at);
   }
   // positions right now: { id: [x, y, alpha], P: [x, y] }
+  // in motion: playing, or paused part-way through the move from frame cur to cur + 1
+  const inMotion = () => playing || t > 0;
   function snapshot() {
     const A = frames[cur];
     const out = {};
-    if (!playing || !frames[cur + 1]) {
+    if (!inMotion() || !frames[cur + 1]) {
       onIceIds(A).forEach(id => out[id] = [...cellW(A.pos[id]), 1]);
       out.P = puckW(A, id => cellW(A.pos[id]));
       return out;
@@ -1233,7 +1235,7 @@ puck 54,15 shot
 
   // handles for the selected player's waypoints, or the puck's bank points
   function drawHandles() {
-    if (playing || !selected || cur >= frames.length - 1) return;
+    if (inMotion() || !selected || cur >= frames.length - 1) return;
     const list = viaList(selected);
     const ring = selected === 'P' ? '#16232f' : isHome(selected) ? C.accent : C.away;
     list.forEach(v => {
@@ -1268,7 +1270,7 @@ puck 54,15 shot
     drawRink();
     const snap = snapshot();
     // each frame shows what happens next: arrows run from this frame into the following one
-    if (!playing && cur < frames.length - 1) drawMoves(frames[cur], frames[cur + 1]);
+    if (!inMotion() && cur < frames.length - 1) drawMoves(frames[cur], frames[cur + 1]);
     drawHandles();
 
     ALL.forEach(id => {
@@ -1432,7 +1434,7 @@ puck 54,15 shot
     if (pointers.size > 2 || pinch) return;
     ignoreRest = false;
     // during playback nothing can be edited, but a drag anywhere moves the zoomed view
-    if (playing) { if (zoom > 1) { pan = { x: e.clientX, y: e.clientY, moved: false }; capture(e); } return; }
+    if (inMotion()) { if (zoom > 1) { pan = { x: e.clientX, y: e.clientY, moved: false }; capture(e); } return; }
     const w = pointerWorld(e);
     const now = performance.now();
     const dbl = now - lastTap.t < 330 && Math.hypot(w[0] - lastTap.w[0], w[1] - lastTap.w[1]) < 1;
@@ -1498,7 +1500,7 @@ puck 54,15 shot
         F.pos[drag] = cell;
       }
       syncScript();
-    } else if (!playing) {
+    } else if (!inMotion()) {
       canvas.className = hitVia(w) >= 0 || hit(w) ? 'grab' : '';
     }
     draw();
@@ -1530,10 +1532,10 @@ puck 54,15 shot
   const speedEl = $('speed');
   const frameDur = () => 1300 / parseFloat(speedEl.value);
   function togglePlay() {
-    if (playing) { playing = false; t = 0; refreshUI(); draw(); return; }
+    if (playing) { playing = false; refreshUI(); draw(); return; }        // pause right here
     if (frames.length < 2) return;
-    if (cur >= frames.length - 1) cur = 0;
-    playing = true; t = 0; lastTs = performance.now(); selected = null;
+    if (t <= 0 && cur >= frames.length - 1) cur = 0;
+    playing = true; lastTs = performance.now(); selected = null;           // resume from t (0 = frame start)
     refreshUI(); requestAnimationFrame(tick);
   }
   function tick(now) {
@@ -1548,8 +1550,10 @@ puck 54,15 shot
     requestAnimationFrame(tick);
   }
   function step(d) {
+    // paused part-way: "previous" first goes back to the start of the current frame
+    const back = d < 0 && t > 0;
     playing = false; t = 0;
-    cur = Math.max(0, Math.min(frames.length - 1, cur + d));
+    if (!back) cur = Math.max(0, Math.min(frames.length - 1, cur + d));
     refreshUI(); draw();
   }
 
@@ -1645,10 +1649,10 @@ puck 54,15 shot
   }
   function updateBackBtn() {
     const btn = $('backBtn'), via = $('viaBtn');
-    const player = !!selected && selected !== 'P' && !playing && canBend(selected);
+    const player = !!selected && selected !== 'P' && !inMotion() && canBend(selected);
     btn.hidden = !player;
     if (player) btn.setAttribute('aria-pressed', String(isBack(frames[cur + 1], selected)));
-    via.hidden = playing || !canBend(selected);
+    via.hidden = inMotion() || !canBend(selected);
     const puck = selected === 'P';
     via.querySelector('.lbl').textContent = puck ? 'Bank' : 'Waypoint';
     via.title = puck ? 'Bank the pass off the boards (W)' : "Bend the selected player's next move through a waypoint (W)";
@@ -1690,7 +1694,7 @@ puck 54,15 shot
     const icon = $('playIcon');
     if (icon.dataset.state !== String(playing)) { icon.dataset.state = String(playing); icon.classList.remove('swap'); void icon.getBoundingClientRect(); icon.classList.add('swap'); }
     icon.innerHTML = playing ? '<path d="M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z"/>' : '<path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"/>';
-    $('prevBtn').disabled = cur === 0;
+    $('prevBtn').disabled = cur === 0 && t <= 0;
     $('nextBtn').disabled = cur >= frames.length - 1;
     $('delBtn').disabled = frames.length < 2;
     updateBackBtn();
@@ -1723,7 +1727,7 @@ puck 54,15 shot
     scriptDirty = false; errorsEl.innerHTML = '';
     statusEl.textContent = ''; statusEl.className = 'status';
   }
-  function changed() { save(); syncScript(); refreshUI(); draw(); }
+  function changed() { if (!playing) t = 0; save(); syncScript(); refreshUI(); draw(); }
 
   scriptEl.addEventListener('input', () => {
     scriptDirty = true;
@@ -1736,7 +1740,7 @@ puck 54,15 shot
       errors.forEach(msg => { const li = document.createElement('li'); li.textContent = msg; errorsEl.appendChild(li); });
       return;
     }
-    frames = f; cur = Math.min(cur, frames.length - 1); playing = false; selected = null;
+    frames = f; cur = Math.min(cur, frames.length - 1); playing = false; t = 0; selected = null;
     scriptDirty = false; save(); syncScript(true); refreshUI(); draw();
     flash('Board updated');
   });
@@ -1976,7 +1980,7 @@ puck 54,15 shot
     </div>`;
     const big = $('libBig');
     const show = () => {
-      drawPreview(big, sc.frames, pv.idx, pv.t, pv.playing);
+      drawPreview(big, sc.frames, pv.idx, pv.t, pv.playing || pv.t > 0);
       libEl.querySelectorAll('.lib-fchip').forEach(c => c.setAttribute('aria-current', String(+c.dataset.i === pv.idx)));
       $('libFrameName').textContent = `${pv.idx + 1} · ${sc.frames[pv.idx].name}`;
       $('libPlayTxt').textContent = pv.playing ? 'Pause' : 'Play';
@@ -1989,10 +1993,10 @@ puck 54,15 shot
       show(); pv.raf = requestAnimationFrame(tickPv);
     };
     $('libPlay').addEventListener('click', () => {
-      if (pv.playing) { stopPreview(); pv.t = 0; show(); return; }
+      if (pv.playing) { stopPreview(); show(); return; }           // pause right here
       if (n < 2) return;
-      if (pv.idx >= n - 1) pv.idx = 0;
-      pv.playing = true; pv.t = 0; pv.last = performance.now(); show(); pv.raf = requestAnimationFrame(tickPv);
+      if (pv.t <= 0 && pv.idx >= n - 1) pv.idx = 0;
+      pv.playing = true; pv.last = performance.now(); show(); pv.raf = requestAnimationFrame(tickPv);
     });
     libEl.querySelectorAll('.lib-fchip').forEach(c => c.addEventListener('click', () => { stopPreview(); pv.idx = +c.dataset.i; pv.t = 0; show(); }));
     $('libOpen').addEventListener('click', () => {
