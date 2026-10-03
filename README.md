@@ -4,7 +4,8 @@ Ice hockey tactics board on a 60 × 30 m Swiss rink (IIHF surface, 8.5 m corners
 
 - Drag players and the puck, build a play frame by frame, press Play.
 - Arrows follow the usual playbook legend: skate, skate with puck, pass/dump, shot, skate backwards, opponent greyed out.
-- Every play is also a small script (open **Script**), e.g. `HC 40,12 via 30,8`, `puck HLD via 0,9` (bank pass) or `HLW off`.
+- **⋯ → New play** starts from a faceoff or an empty rink. **Add player** puts players on the ice; tap one to switch Home/Away, set his position (LW C RW LD RD G, or # for a numbered skater) or remove him. There's no fixed roster: leave players out for power plays and penalty kills.
+- Every play is also a small script (open **Script**), e.g. `HC 40,12 via 30,8`, `puck HLD via 0,9` (bank pass), `H7 18,6` (numbered skater) or `HLW off`.
 - **⋯ → Library** opens ready-made plays from the [`library/`](library/) folder of this repo.
 
 It's a static site with no build step, and an installable app (PWA): it works offline and can be added to the home screen or desktop. Plays are saved in the browser (localStorage).

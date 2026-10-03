@@ -284,6 +284,16 @@ details.syntax b { color: var(--fg); font-weight: 500; }
 .lib-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 18px; overscroll-behavior: contain; }
 .lib-desc { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
 .lib-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 12px; }
+.newplay-modal { width: min(640px, 100%); }
+.np-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 520px) { .np-grid { grid-template-columns: minmax(0, 1fr); } }
+.np-card { display: flex; flex-direction: column; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 0; overflow: hidden; cursor: pointer; color: var(--fg); font: inherit; transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), transform var(--t-fast) var(--ease); }
+.np-thumb { display: block; width: 100%; aspect-ratio: 2 / 1; background: var(--bg); }
+.np-body { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px 12px; }
+.np-title { font: 700 1.1rem/1.2 var(--font-display); letter-spacing: 0.02em; }
+.np-desc { font-size: 13px; color: var(--muted); }
+@media (hover: hover) and (pointer: fine) { .np-card:hover { border-color: var(--muted); box-shadow: var(--float-shadow); transform: translateY(-2px); } }
+.np-card:active { transform: scale(0.985); }
 .lib-card { display: flex; flex-direction: column; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 0; overflow: hidden; cursor: pointer; color: var(--fg); font: inherit; }
 .lib-thumb { display: block; width: 100%; aspect-ratio: 16 / 10; background: var(--bg); }
 .lib-card-body { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 12px; }
@@ -325,17 +335,6 @@ details.syntax b { color: var(--fg); font-weight: 500; }
   .lib-when { -webkit-line-clamp: 3; }
 }
 @media (max-width: 600px) { .library-modal { height: 100%; max-height: 100%; border-radius: 0; } #libraryTitle { display: none; } .lib-search { margin-left: 0; } }
-.lineup-note, .lineup-count { margin: 0; font-size: 13px; color: var(--muted); }
-.lineup-count { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-.lineup-teams { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.lineup-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
-.lineup-chip {
-  border: 1px solid var(--line); background: var(--panel); color: var(--muted);
-  border-radius: 999px; padding: 6px 0; font: 700 15px/1 var(--font-display); letter-spacing: 0.02em; cursor: pointer;
-}
-.lineup-chip.home[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
-.lineup-chip.away[aria-pressed="true"] { background: var(--away); border-color: var(--away); color: #fff; }
-.lineup-chip.goalie[aria-pressed="true"] { box-shadow: inset 0 0 0 2px #f2c230; }
 .modal .legend-grid { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; }
 .modal .legend-list { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
 .modal .legend-list .ico { width: 44px; }
@@ -375,17 +374,18 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
 .app.side .top-float { left: auto; right: 12px; top: 12px; bottom: 12px; flex-direction: column; align-items: flex-end; justify-content: flex-start; gap: 10px; }
 .app.side .top-actions { order: -1; flex-direction: column; margin-left: 0; }
 .app.side .top-actions .lbl { display: none; }
+@media (max-width: 640px) { #addPlayerBtn .lbl { display: none; } }
 .app.side .top-actions .btn { justify-content: center; }
 .app.side .menu { right: calc(100% + 8px); top: 0; }
 .app.side .top-float .legend { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; padding: 10px 12px; }
 @media (max-height: 560px) { .app.side .top-float .legend { display: none; } }
 
 /* ---------- Motion (UI only; the rink canvas is never animated by CSS) ---------- */
-.btn, .frame-btn, .lineup-chip, .lib-cat, .lib-row, .menu button, .lib-item {
+.btn, .frame-btn, .seg button, .selpos button, .lib-cat, .lib-row, .menu button, .lib-item {
   transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease),
               color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
 }
-.btn:active:not(:disabled), .frame-btn:active, .lineup-chip:active, .lib-cat:active, .menu button:active { transform: scale(0.96); }
+.btn:active:not(:disabled), .frame-btn:active, .seg button:active:not(:disabled), .selpos button:active:not(:disabled), .lib-cat:active, .menu button:active { transform: scale(0.96); }
 .lib-row:active { transform: scale(0.99); }
 
 /* panels: the backdrop fades, the dialog lifts in */
@@ -406,7 +406,27 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
 @keyframes pop-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
 @keyframes rise-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes icon-swap { from { opacity: 0; transform: scale(0.6) rotate(-20deg); } to { opacity: 1; transform: none; } }
-#backBtn:not([hidden]), #viaBtn:not([hidden]) { animation: pop-in var(--t-med) var(--ease); }
+/* selected player / puck bar */
+.selbar {
+  position: absolute; z-index: 21; margin: 0 auto; width: fit-content; max-width: calc(100% - 32px);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; padding: 6px;
+  opacity: 0; transform: translateY(6px); transition: opacity var(--t-med) var(--ease), transform var(--t-med) var(--ease);
+}
+.selbar.is-open { opacity: 1; transform: none; }
+.seg { display: flex; background: var(--bg); border-radius: 8px; padding: 2px; }
+.seg button { border: 0; background: transparent; color: var(--muted); font: 600 13px var(--font-body); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"][data-team="H"] { background: var(--accent); color: #fff; }
+.seg button[aria-pressed="true"][data-team="A"] { background: var(--away); color: #fff; }
+.selpos { display: flex; gap: 2px; }
+.selpos button { border: 1px solid transparent; background: transparent; color: var(--fg); font: 700 14px/1 var(--font-display); letter-spacing: 0.03em; min-width: 32px; padding: 7px 6px; border-radius: 6px; cursor: pointer; }
+.selpos button[aria-pressed="true"] { background: var(--fg); color: var(--panel); }
+.selpos button:disabled { color: var(--muted); opacity: 0.4; cursor: not-allowed; }
+@media (hover: hover) and (pointer: fine) { .selpos button:not(:disabled):not([aria-pressed="true"]):hover, .seg button:not([aria-pressed="true"]):hover { background: var(--bg); color: var(--fg); } }
+.selacts { display: flex; gap: 6px; align-items: center; }
+.selacts:not(:only-child) { padding-left: 8px; border-left: 1px solid var(--line); }
+.selbar [hidden] { display: none !important; }
+@media (max-width: 560px) { .selpos button { min-width: 27px; padding: 7px 3px; } .seg button { padding: 6px 9px; } .selbar { gap: 6px; }
+  .selacts .btn .lbl { display: none; } .selacts { border-left: 0 !important; padding-left: 0 !important; } }
 .frame-btn.is-new, .frame-edit { animation: pop-in var(--t-med) var(--ease); }
 #playIcon.swap { animation: icon-swap var(--t-med) var(--ease); }
 .lib-detail { animation: rise-in var(--t-med) var(--ease); }
@@ -448,6 +468,7 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
           <button class="btn zoom-pct" id="zoomReset" title="Reset zoom (0)">100%</button>
           <button class="btn icon" id="zoomIn" title="Zoom in (+)" aria-label="Zoom in"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></svg></button>
         </div>
+        <button class="btn" id="addPlayerBtn" title="Add a player (P)"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M256,136a8,8,0,0,1-8,8H232v16a8,8,0,0,1-16,0V144H200a8,8,0,0,1,0-16h16V112a8,8,0,0,1,16,0v16h16A8,8,0,0,1,256,136Zm-57.87,58.85a8,8,0,0,1-12.26,10.3C165.75,181.19,138.09,168,108,168s-57.75,13.19-77.87,37.15a8,8,0,0,1-12.25-10.3c14.94-17.78,33.52-30.41,54.17-37.17a68,68,0,1,1,71.9,0C164.6,164.44,183.18,177.07,198.13,194.85ZM108,152a52,52,0,1,0-52-52A52.06,52.06,0,0,0,108,152Z"/></svg><span class="lbl">Player</span></button>
         <button class="btn" id="scriptToggle" aria-pressed="false" aria-controls="drawer" title="Script (S)">
           <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z"/></svg><span class="lbl">Script</span>
         </button>
@@ -458,10 +479,8 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
           <div class="menu" id="menu" role="menu" hidden>
             <button role="menuitem" id="libraryBtn">Library</button>
             <hr>
-            <button role="menuitem" id="faceoffBtn">New play from faceoff</button>
+            <button role="menuitem" id="newPlayBtn">New play</button>
             <button role="menuitem" id="installBtn" hidden>Install app</button>
-            <button role="menuitem" id="emptyBtn">New empty play</button>
-            <button role="menuitem" id="lineupBtn">Players on ice</button>
             <button role="menuitem" id="fullscreenBtn" hidden>Full screen</button>
             <hr>
             <button role="menuitem" id="helpBtn">Legend and shortcuts</button>
@@ -474,6 +493,15 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
 
     <div class="cellpos" id="cellPos" aria-live="off" hidden></div>
     <div class="board-toast" id="boardToast" role="status" hidden></div>
+    <div class="selbar float" id="selBar" role="toolbar" aria-label="Selected player" hidden>
+      <div class="seg" id="selTeam" role="group" aria-label="Team"><button data-team="H">Home</button><button data-team="A">Away</button></div>
+      <div class="selpos" id="selPos" role="group" aria-label="Position"><button data-role="LW">LW</button><button data-role="C">C</button><button data-role="RW">RW</button><button data-role="LD">LD</button><button data-role="RD">RD</button><button data-role="G">G</button><button data-role="#" title="Numbered skater, no fixed position">#</button></div>
+      <div class="selacts">
+        <button class="btn" id="backBtn" aria-pressed="false" title="Selected player skates backwards on his next move (B)"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2.0 6A2.6 2.6 0 0 1 7.2 6M4.0 6A2.6 2.6 0 0 0 9.2 6M10.1 6A2.6 2.6 0 0 1 15.3 6M12.1 6A2.6 2.6 0 0 0 17.3 6M18.2 6A2.6 2.6 0 0 1 23.4 6M20.2 6A2.6 2.6 0 0 0 25.4 6"/><path d="M27 2.5 31 6 27 9.5"/></svg><span class="lbl">Backwards</span></button>
+        <button class="btn" id="viaBtn" title="Bend the selected player's next move through a waypoint (W)"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 10C9 10 10 2.5 17 2.5S25 10 31 10"/><circle cx="17" cy="2.6" r="2" fill="#fff"/></svg><span class="lbl">Waypoint</span></button>
+        <button class="btn icon" id="removeBtn" title="Take him off the ice from this frame on (Delete)" aria-label="Remove player"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M256,136a8,8,0,0,1-8,8H200a8,8,0,0,1,0-16h48A8,8,0,0,1,256,136Zm-57.87,58.85a8,8,0,0,1-12.26,10.3C165.75,181.19,138.09,168,108,168s-57.75,13.19-77.87,37.15a8,8,0,0,1-12.25-10.3c14.94-17.78,33.52-30.41,54.17-37.17a68,68,0,1,1,71.9,0C164.6,164.44,183.18,177.07,198.13,194.85ZM108,152a52,52,0,1,0-52-52A52.06,52.06,0,0,0,108,152Z"/></svg></button>
+      </div>
+    </div>
 
     <div class="bottom-float float" id="bottomFloat">
       <div class="transport">
@@ -489,8 +517,6 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
         </div>
         <div class="frames scroll-subtle" id="frames" role="tablist" aria-label="Frames"></div>
         <div class="group edit-group">
-          <button class="btn" id="backBtn" aria-pressed="false" hidden title="Selected player skates backwards on his next move (B)"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2.0 6A2.6 2.6 0 0 1 7.2 6M4.0 6A2.6 2.6 0 0 0 9.2 6M10.1 6A2.6 2.6 0 0 1 15.3 6M12.1 6A2.6 2.6 0 0 0 17.3 6M18.2 6A2.6 2.6 0 0 1 23.4 6M20.2 6A2.6 2.6 0 0 0 25.4 6"/><path d="M27 2.5 31 6 27 9.5"/></svg><span class="lbl">Backwards</span></button>
-          <button class="btn" id="viaBtn" hidden title="Bend the selected player's next move through a waypoint (W)"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 10C9 10 10 2.5 17 2.5S25 10 31 10"/><circle cx="17" cy="2.6" r="2" fill="#fff"/></svg><span class="lbl">Waypoint</span></button>
           <button class="btn" id="addBtn" title="Copy this frame and insert it after"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></svg><span class="lbl">Frame</span></button>
           <button class="btn icon" id="renameBtn" title="Rename frame (or double-click it)" aria-label="Rename frame"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"/></svg></button>
           <button class="btn icon" id="delBtn" title="Delete frame" aria-label="Delete frame"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></svg></button>
@@ -523,7 +549,7 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
           <summary>Script syntax</summary>
 <pre><b>frame Name</b>      new frame, copies the previous one
 <b>HC 22,10</b>        home centre to cell x=22, y=10
-<b>H3 18,6</b>         numbered skater, no fixed position
+<b>H7 18,6</b>         numbered skater, no fixed position
 <b>HLW off</b>         take a player off the ice
 <b>puck HC</b>         puck on that player's stick
 <b>puck 54,15</b>      loose puck (pass, rim, dump)
@@ -537,7 +563,7 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
 
 Only players you list are on the ice.
 Roles  HLW HC HRW HLD HRD HG  ·  ALW AC ARW ALD ARD AG
-Free   H1 … H6  ·  A1 … A6
+Numbered  H1 H2 H3 …  ·  A1 A2 A3 …  (any number)
 x 0–59 left → right, y 0–29 bottom → top</pre>
         </details>
       </div>
@@ -558,18 +584,23 @@ x 0–59 left → right, y 0–29 bottom → top</pre>
   </div>
 </div>
 
-<div class="modal-back" id="lineup" hidden>
-  <div class="modal scroll-subtle" role="dialog" aria-modal="true" aria-labelledby="lineupTitle">
+<div class="modal-back" id="newPlay" hidden>
+  <div class="modal newplay-modal" role="dialog" aria-modal="true" aria-labelledby="newPlayTitle">
     <div class="modal-head">
-      <h2 id="lineupTitle">Players on ice</h2>
-      <button class="btn ghost icon" id="lineupClose" aria-label="Close"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
+      <h2 id="newPlayTitle">New play</h2>
+      <button class="btn ghost icon" id="newPlayClose" aria-label="Close"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
     </div>
-    <p class="lineup-note" id="lineupNote"></p>
-    <div class="lineup-teams">
-      <div><h3>Home</h3><div class="lineup-grid" id="lineupHome"></div></div>
-      <div><h3>Away</h3><div class="lineup-grid" id="lineupAway"></div></div>
+    <div class="np-grid">
+      <button class="np-card" id="npFaceoff">
+        <canvas class="np-thumb" aria-hidden="true"></canvas>
+        <span class="np-body"><span class="np-title">Faceoff</span><span class="np-desc">Both teams lined up at centre ice, five skaters and a goalie each.</span></span>
+      </button>
+      <button class="np-card" id="npEmpty">
+        <canvas class="np-thumb" aria-hidden="true"></canvas>
+        <span class="np-body"><span class="np-title">Empty rink</span><span class="np-desc">Start from nothing and add the players you need.</span></span>
+      </button>
     </div>
-    <p class="lineup-count" id="lineupCount"></p>
+    <p class="lib-note">Replaces the play on the board.</p>
   </div>
 </div>
 
@@ -599,7 +630,7 @@ x 0–59 left → right, y 0–29 bottom → top</pre>
       <li>Passes fly straight to where the receiver ends the frame. The passer releases just in time.</li>
       <li>A loose puck in front of the net is drawn as a shot. Select a player and press <b>Backwards</b> to mark his next move.</li>
       <li>Bank a pass: select the puck and press <b>Bank</b>, or double-tap the pass arrow. Bank points snap to the boards.</li>
-      <li>Who's on the ice: ⋯ → <b>Players on ice</b>, or select a player and press <b>Delete</b>. Use it for power plays and penalty kills.</li>
+      <li>Players: <b>Add player</b> (top right) puts one on the ice. Tap a player to switch <b>Home/Away</b>, set his position (or <b>#</b> for no fixed position) or remove him. Leave players out for power plays and penalty kills.</li>
       <li>Bend a move: select a player and press <b>Waypoint</b>, or double-tap on his arrow. Drag the white handle to shape the curve; double-tap it to remove it.</li>
       <li>Each frame shows where everyone stands and, with arrows, what they do next. The last frame has no arrows.</li>
       <li>Every change shows up in the script, and script edits apply back to the board.</li>
@@ -611,6 +642,7 @@ x 0–59 left → right, y 0–29 bottom → top</pre>
       <li><kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> nudge the selected token one cell</li>
       <li><kbd>W</kbd> add a waypoint to the selected player's next move</li>
       <li><kbd>+</kbd> <kbd>−</kbd> zoom the rink · <kbd>0</kbd> reset (or pinch, Ctrl+scroll; drag empty ice to move around). Zoomed in, the x,y label in the corner shows the cell.</li>
+      <li><kbd>P</kbd> add a player · <kbd>Delete</kbd> remove the selected one</li>
       <li><kbd>B</kbd> toggle backwards skating for the selected player's next move</li>
       <li><kbd>S</kbd> open or close the script · <kbd>Esc</kbd> close panels</li>
     </ul>
@@ -630,23 +662,19 @@ x 0–59 left → right, y 0–29 bottom → top</pre>
   const COLS = L, ROWS = W;                  // 1 m cells
   const TOKEN_R = 0.95;
 
-  // Players by role, plus numbered skaters (H1–H6, A1–A6) for when the role doesn't matter.
-  // A player is on the ice in a frame only if he has a position in it.
+  // Players: H (home) or A (away) plus a position (LW C RW LD RD G) or any number for a skater
+  // without a fixed position. A player is on the ice in a frame only if he has a position in it.
   const ROLES = ['LW', 'C', 'RW', 'LD', 'RD', 'G'];
-  const NUMS = ['1', '2', '3', '4', '5', '6'];
-  const HOME = [...ROLES, ...NUMS].map(r => 'H' + r);
-  const AWAY = [...ROLES, ...NUMS].map(r => 'A' + r);
-  const ALL = [...HOME, ...AWAY];
+  const ID_RE = /^[HA](LW|C|RW|LD|RD|G|[1-9]\d?)$/;
+  const validId = id => ID_RE.test(id);
   const isHome = id => id[0] === 'H';
+  const idOrder = id => { const r = id.slice(1), i = ROLES.indexOf(r); return (isHome(id) ? 0 : 1000) + (i >= 0 ? i : 10 + +r); };
+  const sortIds = ids => ids.sort((a, b) => idOrder(a) - idOrder(b));
+  const idsIn = (...fs) => sortIds([...new Set(fs.flatMap(f => f ? Object.keys(f.pos) : []))]);
   const ROLE = { LW: 'left wing', C: 'centre', RW: 'right wing', LD: 'left D', RD: 'right D', G: 'goalie' };
   const roleName = id => ROLE[id.slice(1)] || 'skater ' + id.slice(1);
   const onIce = (F, id) => !!(F && F.pos[id]);
-  const onIceIds = F => ALL.filter(id => F.pos[id]);
-  // where a player appears when you put him on the ice from the lineup panel
-  const SPAWN = {
-    H1: [16, 6], H2: [16, 12], H3: [16, 18], H4: [16, 24], H5: [10, 9], H6: [10, 21],
-    A1: [43, 6], A2: [43, 12], A3: [43, 18], A4: [43, 24], A5: [49, 9], A6: [49, 21]
-  };
+  const onIceIds = F => sortIds(Object.keys(F.pos));
 
   const FACEOFF = {
     HG: [4, 14], HLD: [18, 20], HRD: [18, 9], HLW: [27, 19], HC: [28, 14], HRW: [27, 10],
@@ -805,26 +833,26 @@ puck 54,15 shot
           cur.puck = words.shot ? { at: [x, y], shot: true } : { at: [x, y] };
         } else {
           const id = target.toUpperCase();
-          if (!ALL.includes(id)) { err(`unknown player "${target}"`); return; }
+          if (!validId(id)) { err(`unknown player "${target}". Use H or A plus LW, C, RW, LD, RD, G or a number.`); return; }
           if (!cur.pos[id]) { err(`${id} isn't on the ice in this frame, so he can't have the puck`); return; }
           cur.puck = { holder: id };
         }
         cur.puckVia = words.via;
         return;
       }
-      const om = line.match(/^([A-Za-z]+\d?)\s+off$/i);
+      const om = line.match(/^([A-Za-z]+\d{0,2})\s+off$/i);
       if (om) {
         const id = om[1].toUpperCase();
-        if (!ALL.includes(id)) { err(`unknown player "${om[1]}"`); return; }
+        if (!validId(id)) { err(`unknown player "${om[1]}". Use H or A plus LW, C, RW, LD, RD, G or a number.`); return; }
         if (cur.puck.holder === id) cur.puck = { at: clone(cur.pos[id]) };
         delete cur.pos[id]; delete cur.via[id];
         cur.back = cur.back.filter(x => x !== id);
         return;
       }
-      const sm = line.match(/^([A-Za-z]+\d?)\s+(-?\d+)\s*,\s*(-?\d+)(.*)$/);
+      const sm = line.match(/^([A-Za-z]+\d{0,2})\s+(-?\d+)\s*,\s*(-?\d+)(.*)$/);
       if (sm) {
         const id = sm[1].toUpperCase(), x = +sm[2], y = +sm[3];
-        if (!ALL.includes(id)) { err(`unknown player "${sm[1]}"`); return; }
+        if (!validId(id)) { err(`unknown player "${sm[1]}". Use H or A plus LW, C, RW, LD, RD, G or a number.`); return; }
         if (!validCell(x, y)) { err(`cell ${x},${y} is outside the ice`); return; }
         const words = readWords(sm[4], ['back']);
         if (!words) return;
@@ -860,7 +888,7 @@ puck 54,15 shot
     frames.forEach((f, i) => {
       const prev = frames[i - 1];
       out.push('frame ' + f.name);
-      ALL.forEach(id => {
+      idsIn(prev, f).forEach(id => {
         const p = f.pos[id];
         if (!p) { if (prev && prev.pos[id]) out.push(id.padEnd(4) + 'off'); return; }
         const was = prev && prev.pos[id];
@@ -943,10 +971,12 @@ puck 54,15 shot
       stageEl.style.padding = `12px ${right + 24}px 12px ${lw + 24}px`;
       cp.style.bottom = '14px';
       cp.style.right = (right + 30) + 'px';
+      Object.assign(document.getElementById('selBar').style, { left: (lw + 24) + 'px', right: (right + 24) + 'px', bottom: '12px' });
     } else {
       stageEl.style.paddingBottom = (bf.offsetHeight + 40) + 'px';
       cp.style.bottom = (bf.offsetHeight + 18) + 'px';
       cp.style.right = Math.max(16, (sw - bf.offsetWidth) / 2 + 6) + 'px';
+      Object.assign(document.getElementById('selBar').style, { left: '16px', right: '16px', bottom: (bf.offsetHeight + 22) + 'px' });
     }
     const st = getComputedStyle(stageEl);
     const availW = stageEl.clientWidth - parseFloat(st.paddingLeft) - parseFloat(st.paddingRight);
@@ -1071,7 +1101,7 @@ puck 54,15 shot
       return out;
     }
     const B = frames[cur + 1];
-    ALL.forEach(id => {
+    idsIn(A, B).forEach(id => {
       const a = A.pos[id], b = B.pos[id];
       if (a && b) out[id] = [...lerpPos(A, B, id, t), 1];
       else if (b) out[id] = [...cellW(b), Math.min(1, t * 2)];         // coming on
@@ -1208,7 +1238,7 @@ puck 54,15 shot
 
   function drawMoves(P, F) {
     const plan = puckKey(P.puck) !== puckKey(F.puck) ? passPlan(P, F) : null;
-    ALL.forEach(id => {
+    idsIn(P, F).forEach(id => {
       if (!P.pos[id] || !F.pos[id]) return;
       const m = movePath(P, F, id);
       if (m.len < 0.01) return;
@@ -1272,8 +1302,7 @@ puck 54,15 shot
     if (!inMotion() && cur < frames.length - 1) drawMoves(frames[cur], frames[cur + 1]);
     drawHandles();
 
-    ALL.forEach(id => {
-      if (!snap[id]) return;
+    sortIds(Object.keys(snap).filter(k => k !== 'P')).forEach(id => {
       const [x, y, alpha] = snap[id];
       if (alpha <= 0) return;
       ctx.save(); ctx.globalAlpha = alpha;
@@ -1311,9 +1340,10 @@ puck 54,15 shot
   function hit(w) {
     const snap = snapshot();
     if (Math.hypot(snap.P[0] - w[0], snap.P[1] - w[1]) < 0.75) return 'P';
-    for (let i = ALL.length - 1; i >= 0; i--) {
-      const p = snap[ALL[i]];
-      if (p && p[2] > 0.5 && Math.hypot(p[0] - w[0], p[1] - w[1]) < TOKEN_R + 0.25) return ALL[i];
+    const ids = sortIds(Object.keys(snap).filter(k => k !== 'P'));
+    for (let i = ids.length - 1; i >= 0; i--) {
+      const p = snap[ids[i]];
+      if (p && p[2] > 0.5 && Math.hypot(p[0] - w[0], p[1] - w[1]) < TOKEN_R + 0.25) return ids[i];
     }
     return null;
   }
@@ -1367,7 +1397,7 @@ puck 54,15 shot
     const A = frames[cur], B = frames[cur + 1];
     let best = null, bd = 0.8;
     const test = (id, m) => { for (let d = 0; d <= m.len; d += 0.3) { const q = at(m, d).p; const dd = Math.hypot(q[0] - w[0], q[1] - w[1]); if (dd < bd) { bd = dd; best = id; } } };
-    ALL.forEach(id => { if (A.pos[id] && B.pos[id]) { const m = movePath(A, B, id); if (m.len >= 2) test(id, m); } });
+    idsIn(A, B).forEach(id => { if (A.pos[id] && B.pos[id]) { const m = movePath(A, B, id); if (m.len >= 2) test(id, m); } });
     if (passIntoNext()) test('P', passPlan(A, B).path);
     return best ? { id: best, seg: segIndex(ctrlOf(best), w) } : null;
   }
@@ -1646,16 +1676,102 @@ puck 54,15 shot
     if (active) keepInStrip(active);
     updateFades();
   }
+  // ---------- Selected player / puck bar ----------
+  const usedInPlay = id => frames.some(f => f.pos[id]);
+  function nextNumber(team) { for (let n = 1; n < 100; n++) if (!usedInPlay(team + n)) return team + n; return null; }
   function updateBackBtn() {
+    const bar = $('selBar');
+    const isP = selected === 'P';
+    const show = !!selected && !inMotion() && (isP ? canBend('P') : onIce(frames[cur], selected));
+    if (!show) { if (!bar.hidden) { animShow(bar, false, 180); placeToast(); } return; }
+    $('selTeam').hidden = isP; $('selPos').hidden = isP; $('removeBtn').hidden = isP;
+    if (!isP) {
+      const team = selected[0], role = ROLES.includes(selected.slice(1)) ? selected.slice(1) : '#';
+      $('selTeam').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.team === team)));
+      $('selPos').querySelectorAll('button').forEach(b => {
+        const r = b.dataset.role;
+        b.setAttribute('aria-pressed', String(r === role));
+        b.disabled = r !== '#' && r !== role && usedInPlay(team + r);
+        b.title = r === '#' ? (role === '#' ? 'Skater ' + selected.slice(1) + ' (no fixed position)' : 'Make him a numbered skater with no fixed position')
+          : b.disabled ? `${team === 'H' ? 'Home' : 'Away'} already has a ${ROLE[r]}` : ROLE[r][0].toUpperCase() + ROLE[r].slice(1);
+      });
+    }
     const btn = $('backBtn'), via = $('viaBtn');
-    const player = !!selected && selected !== 'P' && !inMotion() && canBend(selected);
-    btn.hidden = !player;
-    if (player) btn.setAttribute('aria-pressed', String(isBack(frames[cur + 1], selected)));
-    via.hidden = inMotion() || !canBend(selected);
-    const puck = selected === 'P';
-    via.querySelector('.lbl').textContent = puck ? 'Bank' : 'Waypoint';
-    via.title = puck ? 'Bank the pass off the boards (W)' : "Bend the selected player's next move through a waypoint (W)";
+    btn.hidden = isP || !canBend(selected);
+    if (!btn.hidden) btn.setAttribute('aria-pressed', String(isBack(frames[cur + 1], selected)));
+    via.hidden = !canBend(selected);
+    via.querySelector('.lbl').textContent = isP ? 'Bank' : 'Waypoint';
+    via.title = isP ? 'Bank the pass off the boards (W)' : "Bend the selected player's next move through a waypoint (W)";
+    bar.querySelector('.selacts').hidden = btn.hidden && via.hidden && $('removeBtn').hidden;
+    if (bar.hidden || !isOpen(bar)) animShow(bar, true);
+    placeToast();
   }
+  // a player's identity (team + position) is the same in every frame, so renaming touches the whole play
+  function renameEverywhere(from, to) {
+    frames.forEach(f => {
+      if (f.pos[from]) { f.pos[to] = f.pos[from]; delete f.pos[from]; }
+      if (f.via && f.via[from]) { f.via[to] = f.via[from]; delete f.via[from]; }
+      if (f.back) f.back = f.back.map(x => x === from ? to : x);
+      if (f.puck.holder === from) f.puck.holder = to;
+    });
+    if (selected === from) selected = to;
+  }
+  function setTeam(team) {
+    if (!selected || selected === 'P' || selected[0] === team) return;
+    const r = selected.slice(1);
+    renameEverywhere(selected, ROLES.includes(r) && !usedInPlay(team + r) ? team + r : nextNumber(team));
+    changed();
+  }
+  function setRole(r) {
+    if (!selected || selected === 'P') return;
+    const team = selected[0], now = ROLES.includes(selected.slice(1)) ? selected.slice(1) : '#';
+    if (r === now) return;
+    const to = r === '#' ? nextNumber(team) : team + r;
+    if (!to || usedInPlay(to)) return;
+    renameEverywhere(selected, to);
+    changed();
+  }
+  $('selTeam').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setTeam(b.dataset.team); });
+  $('selPos').addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled) setRole(b.dataset.role); });
+  $('removeBtn').addEventListener('click', () => { if (selected && selected !== 'P') removePlayer(selected); });
+
+  // ---------- Adding and removing players ----------
+  function freeCellNear(F, c) {
+    const taken = new Set(onIceIds(F).map(id => F.pos[id].join(',')));
+    if (F.puck.at) taken.add(F.puck.at.join(','));
+    for (let r = 0; r < 8; r++) for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+      const x = c[0] + dx, y = c[1] + dy;
+      if (validCell(x, y) && !taken.has(x + ',' + y)) return [x, y];
+    }
+    return c;
+  }
+  // new home skater in the middle of what you're looking at, on the ice from this frame on
+  function addPlayer() {
+    playing = false; t = 0;
+    const id = nextNumber('H') || nextNumber('A');
+    if (!id) { flashBoard('That’s a lot of players. Remove some first.'); return; }
+    const mid = toWorld(cssW / 2, cssH / 2);
+    const c = snapCell(Math.min(L - 1, Math.max(0, mid[0])), Math.min(W - 1, Math.max(0, mid[1])));
+    for (let i = cur; i < frames.length; i++) frames[i].pos[id] = freeCellNear(frames[i], c);
+    selected = id;
+    changed();
+  }
+  // take a player off the ice from this frame on (from frame 1 he's gone from the play)
+  function removePlayer(id) {
+    for (let i = cur; i < frames.length; i++) {
+      const F = frames[i];
+      if (F.puck.holder === id && F.pos[id]) F.puck = { at: clone(F.pos[id]) };
+      delete F.pos[id];
+      if (F.via) delete F.via[id];
+      if (F.back) F.back = F.back.filter(x => x !== id);
+    }
+    if (frames[cur + 1] && frames[cur + 1].via) delete frames[cur + 1].via[id];
+    if (selected === id) selected = null;
+    changed();
+  }
+  $('addPlayerBtn').addEventListener('click', addPlayer);
+
   function toggleBack() {
     if (!selected || selected === 'P' || !canBend(selected)) return;
     const F = frames[cur + 1];   // the move out of this frame is stored on the next one
@@ -1678,10 +1794,17 @@ puck 54,15 shot
   }
   const isOpen = el => el.classList.contains('is-open');
   let boardToastTimer;
+  // the message sits just above the bottom bar, and above the player bar when that's showing
+  function placeToast() {
+    const el = $('boardToast'), bf = $('bottomFloat'), sb = $('selBar');
+    const side = $('app').classList.contains('side');
+    const lift = isOpen(sb) ? sb.offsetHeight + 10 : 0;
+    el.style.bottom = (side ? 18 : bf.offsetHeight + 22) + lift + 'px';
+  }
   function flashBoard(msg) {
     const el = $('boardToast'), bf = $('bottomFloat');
     const side = $('app').classList.contains('side');
-    el.textContent = msg; el.style.bottom = side ? '18px' : (bf.offsetHeight + 22) + 'px';
+    el.textContent = msg; placeToast();
     animShow(el, true);
     clearTimeout(boardToastTimer); boardToastTimer = setTimeout(() => animShow(el, false), 2200);
   }
@@ -1726,7 +1849,7 @@ puck 54,15 shot
     scriptDirty = false; errorsEl.innerHTML = '';
     statusEl.textContent = ''; statusEl.className = 'status';
   }
-  function changed() { if (!playing) t = 0; save(); syncScript(); refreshUI(); draw(); }
+  function changed() { if (!playing) t = 0; save(); syncScript(); refreshUI(); draw(); updateBackBtn(); }
 
   scriptEl.addEventListener('input', () => {
     scriptDirty = true;
@@ -1762,11 +1885,26 @@ puck 54,15 shot
   $('helpBtn').addEventListener('click', () => { setMenu(false); setHelp(true); });
   $('helpClose').addEventListener('click', () => setHelp(false));
   $('help').addEventListener('click', e => { if (e.target.id === 'help') setHelp(false); });
-  $('faceoffBtn').addEventListener('click', () => {
-    setMenu(false);
-    frames = [{ name: 'Faceoff', pos: clone(FACEOFF), puck: { at: [29, 14] } }];
-    cur = 0; selected = null; playing = false; syncScript(true); changed();
-  });
+  // ---------- New play ----------
+  const blankFrame = (name, pos = {}) => ({ name, pos, puck: { at: [29, 14] }, back: [], via: {}, puckVia: [] });
+  function setNewPlay(open) {
+    animShow($('newPlay'), open);
+    if (open) requestAnimationFrame(() => {
+      drawPreview($('npFaceoff').querySelector('canvas'), [blankFrame('Faceoff', clone(FACEOFF))], 0);
+      drawPreview($('npEmpty').querySelector('canvas'), [blankFrame('Start')], 0);
+      $('newPlayClose').focus();
+    });
+  }
+  function startPlay(frame, msg) {
+    frames = [frame]; cur = 0; selected = null; playing = false; t = 0;
+    syncScript(true); changed(); setNewPlay(false);
+    if (msg) flashBoard(msg);
+  }
+  $('newPlayBtn').addEventListener('click', () => { setMenu(false); setNewPlay(true); });
+  $('newPlayClose').addEventListener('click', () => setNewPlay(false));
+  $('newPlay').addEventListener('click', e => { if (e.target.id === 'newPlay') setNewPlay(false); });
+  $('npFaceoff').addEventListener('click', () => startPlay(blankFrame('Faceoff', clone(FACEOFF))));
+  $('npEmpty').addEventListener('click', () => startPlay(blankFrame('Start'), 'Add players with the Add player button'));
 
   // ---------- Full screen (hides browser bars, and the status/navigation bars on Android) ----------
   const fsBtn = $('fullscreenBtn');
@@ -1838,11 +1976,12 @@ puck 54,15 shot
   function drawPreview(cv, fr, idx, tt = 0, anim = false, cropFrames, cover = false) {
     const rect = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
     const w = Math.max(1, rect.width), h = Math.max(1, rect.height);
-    // match the drawing size to the displayed size in both directions, or the preview gets stretched
-    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
     // redraw whenever the canvas changes size (e.g. text reflows when the web font arrives)
     cv._args = [fr, idx, tt, anim, cropFrames, cover];
     if (!cv._watched) { cv._watched = true; previewRO.observe(cv); }
+    if (rect.width < 20 || rect.height < 20) return;        // not laid out yet; the observer draws it once it is
+    // match the drawing size to the displayed size in both directions, or the preview gets stretched
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
     const [x0, x1, ymid] = cv._crop || (cv._crop = cropFor(cropFrames || fr));
     const keep = { ctx, s, sBase, zoom, ox, oy, cssW, cssH, frames, cur, selected, hover, playing, t, pad: { ...PAD }, view: { ...view }, previewMode };
     try {
@@ -2015,67 +2154,6 @@ puck 54,15 shot
   $('libraryClose').addEventListener('click', () => setLibrary(false));
   $('library').addEventListener('click', e => { if (e.target.id === 'library') setLibrary(false); });
 
-  // ---------- Players on ice ----------
-  // Putting a player on or off applies from the current frame to the end of the play.
-  function freeCellNear(F, c) {
-    const taken = new Set(onIceIds(F).map(id => F.pos[id].join(',')));
-    for (let r = 0; r < 8; r++) for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) {
-      if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-      const x = c[0] + dx, y = c[1] + dy;
-      if (validCell(x, y) && !taken.has(x + ',' + y)) return [x, y];
-    }
-    return c;
-  }
-  function setOnIce(id, on) {
-    if (on) {
-      let start = null;
-      for (let i = cur; i >= 0 && !start; i--) if (frames[i].pos[id]) start = frames[i].pos[id];
-      start = start || FACEOFF[id] || SPAWN[id];
-      for (let i = cur; i < frames.length; i++) if (!frames[i].pos[id]) frames[i].pos[id] = freeCellNear(frames[i], start);
-    } else {
-      for (let i = cur; i < frames.length; i++) {
-        const F = frames[i];
-        if (F.puck.holder === id && F.pos[id]) F.puck = { at: clone(F.pos[id]) };
-        delete F.pos[id];
-        if (F.via) delete F.via[id];
-        if (F.back) F.back = F.back.filter(x => x !== id);
-      }
-      if (frames[cur + 1] && frames[cur + 1].via) delete frames[cur + 1].via[id];
-      if (selected === id) selected = null;
-    }
-    changed();
-    renderLineup();
-  }
-  function renderLineup() {
-    const F = frames[cur];
-    [['lineupHome', HOME, 'home'], ['lineupAway', AWAY, 'away']].forEach(([el, ids, team]) => {
-      const box = $(el); box.innerHTML = '';
-      ids.forEach(id => {
-        const b = document.createElement('button');
-        b.className = 'lineup-chip ' + team + (id.endsWith('G') ? ' goalie' : '');
-        b.textContent = id.slice(1);
-        b.title = (team === 'home' ? 'Home ' : 'Away ') + roleName(id) + ' (' + id + ')';
-        b.setAttribute('aria-pressed', String(!!F.pos[id]));
-        b.addEventListener('click', () => setOnIce(id, !F.pos[id]));
-        box.appendChild(b);
-      });
-    });
-    const n = ids => ids.filter(id => F.pos[id] && !id.endsWith('G')).length;
-    const g = ids => ids.some(id => F.pos[id] && id.endsWith('G')) ? ' + G' : '';
-    $('lineupCount').textContent = `Skaters: home ${n(HOME)}${g(HOME)} · away ${n(AWAY)}${g(AWAY)}`;
-    $('lineupNote').textContent = `Changes apply from frame ${cur + 1} (${F.name}) to the end. Numbered players have no fixed position.`;
-  }
-  function setLineup(open) { animShow($('lineup'), open); if (open) { renderLineup(); $('lineupClose').focus(); } }
-  $('lineupBtn').addEventListener('click', () => { setMenu(false); setLineup(true); });
-  $('lineupClose').addEventListener('click', () => setLineup(false));
-  $('lineup').addEventListener('click', e => { if (e.target.id === 'lineup') setLineup(false); });
-  $('emptyBtn').addEventListener('click', () => {
-    setMenu(false);
-    frames = [{ name: 'Start', pos: {}, puck: { at: [29, 14] }, back: [], via: {}, puckVia: [] }];
-    cur = 0; selected = null; playing = false; syncScript(true); changed();
-    setLineup(true);
-  });
-
   // ---------- Rink zoom ----------
   function updateZoomUI() {
     const b = $('zoomReset');
@@ -2113,7 +2191,7 @@ puck 54,15 shot
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (isOpen($('help'))) { setHelp(false); return; }
-      if (isOpen($('lineup'))) { setLineup(false); return; }
+      if (isOpen($('newPlay'))) { setNewPlay(false); return; }
       if (isOpen($('library'))) { if (lib.view === 'detail') { stopPreview(); lib.view = 'list'; renderLibrary(); } else setLibrary(false); return; }
       if (isOpen(menuEl)) { setMenu(false); menuBtn.focus(); return; }
       if (drawerOpen() && e.target !== scriptEl) { setDrawer(false); return; }
@@ -2130,7 +2208,8 @@ puck 54,15 shot
     if (e.key === '-' || e.key === '_') { zoomAt(1 / 1.4); return; }
     if (e.key === '0') { resetZoom(); return; }
     if (e.key === 'w' || e.key === 'W') { addViaMid(); return; }
-    if ((e.key === 'Delete' || e.key === 'Backspace') && selected && selected !== 'P' && !playing) { e.preventDefault(); setOnIce(selected, false); return; }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && selected && selected !== 'P' && !inMotion()) { e.preventDefault(); removePlayer(selected); return; }
+    if (e.key === 'p' || e.key === 'P') { addPlayer(); return; }
     const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key];
     if (d && selected && !playing) {
       e.preventDefault();
