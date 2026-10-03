@@ -1268,22 +1268,26 @@ puck 54,15 shot
     };
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
-    const xRow = bottom + 6 + fs / 2;
-    // the bottom row runs right as far as the free area goes; the left column runs up and down
-    // the free area but stops above the bottom row. Neither goes under the floating bars.
-    const xMax = zoom > 1.001 ? free.r - 12 : right + 1;
-    const yMin = zoom > 1.001 ? free.t + fs : oy - 1;
-    const yMax = zoom > 1.001 ? xRow - fs - 2 : bottom + 1;
+    // At 100% the numbers hug the rink. Zoomed in, the bottom row sits just below the bottom boards
+    // if they're in view, otherwise at the bottom of the free area; the left column likewise sits
+    // beside the left boards or at the left edge. Neither goes under the floating bars.
+    const zoomed = zoom > 1.001;
+    const xRow = zoomed ? Math.min(free.b - fs / 2 - 6, Math.max(py(0) + 6 + fs / 2, free.t + fs * 3)) : bottom + 6 + fs / 2;
+    const yCol = zoomed ? Math.max(free.l + 30, Math.min(px(0) - 6, free.r - 60)) : ox - 6;
+    const xMin = zoomed ? yCol + 10 : ox - 1;
+    const xMax = zoomed ? free.r - 12 : right + 1;
+    const yMin = zoomed ? free.t + fs : oy - 1;
+    const yMax = zoomed ? xRow - fs - 2 : bottom + 1;
     for (let x = 0; x < COLS; x++) {
       if (x % step && !(zoom === 1 && x === 59)) continue;     // at full view also mark the last column
       const X = px(x + 0.5);
-      if (X >= ox - 1 && X <= xMax) label(String(x), X, xRow, 'center');
+      if (X >= xMin && X <= xMax) label(String(x), X, xRow, 'center');
     }
     ctx.textAlign = 'right';
     for (let y = 0; y < ROWS; y++) {
       if (y % step && !(zoom === 1 && y === 29)) continue;
       const Y = py(y + 0.5);
-      if (Y >= yMin && Y <= yMax) label(String(y), ox - 6, Y, 'right');
+      if (Y >= yMin && Y <= yMax) label(String(y), yCol, Y, 'right');
     }
   }
   function draw() {
