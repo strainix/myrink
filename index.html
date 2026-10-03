@@ -1,0 +1,1353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f7f9">
+<meta name="description" content="Ice hockey tactics board on a 60 × 30 m Swiss rink with a one-metre grid.">
+<title>Rink Grid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the rink fills the whole screen; controls float above it as cards.
+   Single light look (ice-rink white), chosen on purpose for every viewer. */
+:root {
+  --bg: #f5f7f9;
+  --panel: #ffffff;
+  --fg: #16232f;
+  --muted: #66737f;
+  --line: #e1e6eb;
+  --accent: #d52b1e;      /* Swiss red: home team, primary actions */
+  --away: #1d3a5c;
+  --away-text: #1d3a5c;
+  --ice: #ffffff;
+  --ice-grid: rgba(40, 90, 140, 0.09);
+  --ice-grid-strong: rgba(40, 90, 140, 0.22);
+  --rink-red: #c8102e;
+  --rink-blue: #0d5cab;
+  --crease: rgba(66, 150, 230, 0.18);
+  --boards: #2a3946;
+  --hover-cell: rgba(213, 43, 30, 0.12);
+  --scrim: rgba(20, 34, 48, 0.25);
+  --shadow: 0 12px 32px rgba(22, 35, 47, 0.14);
+  --float-shadow: 0 4px 18px rgba(22, 35, 47, 0.10), 0 1px 3px rgba(22, 35, 47, 0.06);
+  --ok: #2f7d4f;
+  --warn: #b5482d;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; overscroll-behavior: none; }
+
+/* Subtle scrollbars: thin, no track, thumb only shows on hover or while scrolling */
+.scroll-subtle { overscroll-behavior: contain; }
+/* Firefox has no ::-webkit-scrollbar; Chrome ignores those rules once scrollbar-width is set */
+@supports not selector(::-webkit-scrollbar) {
+  .scroll-subtle { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+  .scroll-subtle:hover, .scroll-subtle:focus-within, .scroll-subtle.is-scrolling { scrollbar-color: rgba(22, 35, 47, 0.22) transparent; }
+}
+.scroll-subtle::-webkit-scrollbar { width: 6px; height: 4px; }
+.scroll-subtle::-webkit-scrollbar-track { background: transparent; }
+.scroll-subtle::-webkit-scrollbar-thumb { background: transparent; border-radius: 99px; }
+.scroll-subtle:hover::-webkit-scrollbar-thumb, .scroll-subtle.is-scrolling::-webkit-scrollbar-thumb { background: rgba(22, 35, 47, 0.22); }
+.scroll-subtle::-webkit-scrollbar-thumb:hover { background: rgba(22, 35, 47, 0.38); }
+.scroll-subtle::-webkit-scrollbar-corner { background: transparent; }
+body {
+  background: var(--bg); color: var(--fg);
+  font: 15px/1.5 var(--font-body);
+  overflow: hidden;
+}
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0;
+  transition: grid-template-columns 0.22s ease;
+}
+.app.drawer-open { grid-template-columns: minmax(0, 1fr) min(440px, 40vw); }
+@media (max-width: 899px) { .app.drawer-open { grid-template-columns: minmax(0, 1fr) 0; } }
+
+/* ---------- Stage + floating cards ---------- */
+.stage {
+  position: relative; min-width: 0; height: 100%;
+  display: grid; place-items: center;
+  padding: 68px 16px 150px;
+}
+canvas#rink { display: block; touch-action: none; }
+canvas#rink.grab { cursor: grab; }
+canvas#rink.grabbing { cursor: grabbing; }
+.float {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: var(--float-shadow);
+}
+.top-float {
+  position: absolute; z-index: 20; top: 12px; left: 16px; right: 16px;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  pointer-events: none;
+}
+.top-float > * { pointer-events: auto; }
+.legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); align-items: center; padding: 9px 14px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
+.dot.home { background: var(--accent); }
+.dot.away { background: var(--away); }
+.dot.puck { background: #111; width: 8px; height: 8px; box-shadow: 0 0 0 1.5px var(--panel), 0 0 0 2.5px var(--muted); }
+.ico { width: 34px; height: 12px; flex: none; fill: none; stroke: #16232f; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ico.opp { stroke: #a7b0b9; }
+.btn .ico { width: 30px; height: 12px; fill: none; }
+.btn[aria-pressed="true"] .ico { stroke: currentColor; }
+.top-actions { display: flex; gap: 6px; align-items: center; padding: 5px; margin-left: auto; }
+@media (max-width: 1099px) { .top-float .legend { display: none; } }
+
+.bottom-float {
+  position: absolute; z-index: 20; left: 50%; transform: translateX(-50%);
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  width: min(1100px, calc(100% - 32px));
+  overflow: hidden;
+}
+.board-toast {
+  position: absolute; z-index: 25; left: 50%; transform: translateX(-50%);
+  background: var(--fg); color: #fff; font-size: 13px; padding: 6px 12px; border-radius: 8px;
+  box-shadow: var(--float-shadow); pointer-events: none; white-space: nowrap;
+}
+.cellpos {
+  position: absolute; z-index: 15; pointer-events: none;
+  font: 11px/1 var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+.bottom-float { container: bar / inline-size; }
+/* wide: controls · frames · edit buttons on one row.
+   narrow: controls and edit buttons share the top row, frames get the full row below. */
+.transport {
+  display: grid; align-items: center; gap: 8px 10px; padding: 8px 10px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "play frames edit";
+}
+.play-group { grid-area: play; }
+.edit-group { grid-area: edit; justify-self: end; flex-wrap: wrap; justify-content: flex-end; }
+.transport .frames { grid-area: frames; }
+@container bar (max-width: 900px) {
+  .transport { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "play edit" "frames frames"; }
+}
+@container bar (max-width: 640px) { .btn .lbl { display: none; } }
+@container bar (max-width: 420px) { #playTxt { display: none; } #playBtn { padding-inline: 10px; } }
+.frames {
+  display: flex; gap: 6px; flex: 1 1 320px; min-width: 0;
+  overflow-x: auto; overflow-y: hidden; padding: calc(4px + var(--sb, 0px)) 2px 4px; margin-block: calc(-4px - var(--sb, 0px) / 2);
+  overscroll-behavior-x: contain; touch-action: pan-x;
+  --fade-l: 0px; --fade-r: 0px;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+}
+.frames.fade-l { --fade-l: 22px; }
+.frames.fade-r { --fade-r: 22px; }
+.frame-btn {
+  flex: 0 0 auto; border: 1px solid var(--line); background: transparent; color: var(--fg);
+  border-radius: 6px; padding: 5px 10px; font: 500 13px var(--font-body); cursor: pointer;
+  display: inline-flex; gap: 6px; align-items: baseline; white-space: nowrap;
+}
+.frame-btn .n { font: 12px var(--font-mono); color: var(--muted); }
+.frame-btn[aria-current="true"] { background: var(--fg); color: var(--panel); border-color: var(--fg); }
+.frame-btn[aria-current="true"] .n { color: inherit; opacity: 0.7; }
+.frame-edit { font: 500 13px var(--font-body); width: 150px; padding: 4px 8px; flex: none; }
+
+button { font-family: var(--font-body); }
+.btn {
+  border: 1px solid var(--line); background: var(--panel); color: var(--fg);
+  border-radius: 6px; padding: 6px 12px; font-size: 14px; font-weight: 500; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; line-height: 1.2; white-space: nowrap;
+}
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.ghost { border-color: transparent; background: transparent; }
+.btn.icon { padding: 6px 8px; }
+.btn[aria-pressed="true"], .btn[aria-expanded="true"] { background: var(--fg); color: var(--panel); border-color: var(--fg); }
+.btn svg { width: 17px; height: 17px; fill: currentColor; flex: none; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+*:focus, *:focus-visible { outline: none; }
+/* no tap flash, no long-press callout on touch screens */
+* { -webkit-tap-highlight-color: transparent; }
+button, canvas, .frame-btn { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+/* hover styles only for real pointers, so they don't stick after a tap */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { border-color: var(--muted); }
+  .btn.primary:hover { filter: brightness(1.06); }
+  .btn.ghost:hover { background: var(--bg); }
+  .menu button:hover { background: var(--bg); }
+}
+.group { display: flex; gap: 6px; align-items: center; }
+select, input[type="text"], input[type="number"] {
+  font: 14px var(--font-body); color: var(--fg); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px;
+}
+
+/* ---------- Menu ---------- */
+.menu-wrap { position: relative; }
+.menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow);
+  min-width: 220px; padding: 6px; display: flex; flex-direction: column;
+}
+.menu button {
+  text-align: left; border: 0; background: transparent; color: var(--fg); font-size: 14px;
+  padding: 8px 10px; border-radius: 5px; cursor: pointer;
+}
+.menu button:active { background: var(--bg); }
+.menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+
+/* ---------- Drawer ---------- */
+.drawer {
+  grid-column: 2;
+  background: var(--panel); border-left: 1px solid var(--line);
+  display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+}
+.drawer-inner { width: min(440px, 40vw); height: 100%; display: flex; flex-direction: column; }
+@media (max-width: 899px) {
+  .drawer {
+    position: fixed; inset: 0 0 0 auto; width: min(440px, 100vw); z-index: 40;
+    transform: translateX(100%); transition: transform 0.22s ease; box-shadow: var(--shadow);
+    padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .app.drawer-open .drawer { transform: none; }
+  .drawer-inner { width: 100%; }
+}
+.scrim { display: none; }
+@media (max-width: 899px) {
+  .app.drawer-open .scrim { display: block; position: fixed; inset: 0; background: var(--scrim); z-index: 35; }
+}
+.drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+h2 { font: 700 1.2rem/1 var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; margin: 0; }
+.status { font: 500 12px var(--font-mono); color: var(--muted); }
+.status.dirty { color: var(--warn); }
+.drawer-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 12px 16px 16px; }
+textarea#script {
+  flex: 1; min-height: 180px; width: 100%; resize: none;
+  font: 13px/1.55 var(--font-mono); color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; tab-size: 4;
+  white-space: pre; overflow: auto;
+}
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.errors { margin: 0; padding: 0; list-style: none; font: 13px var(--font-mono); color: var(--warn); max-height: 7em; overflow: auto; }
+.errors:empty { display: none; }
+.toast { font: 12px var(--font-mono); color: var(--ok); }
+details.syntax { font-size: 13px; color: var(--muted); }
+details.syntax summary { cursor: pointer; font-weight: 600; color: var(--fg); }
+details.syntax pre { font: 12.5px/1.6 var(--font-mono); background: var(--bg); border-radius: 6px; padding: 8px 10px; margin: 8px 0 0; overflow-x: auto; white-space: pre; }
+details.syntax b { color: var(--fg); font-weight: 500; }
+
+/* ---------- Help modal ---------- */
+.modal-back { position: fixed; inset: 0; background: var(--scrim); z-index: 50; display: grid; place-items: center; padding: 16px; }
+.modal { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); width: min(480px, 100%); max-height: 90%; overflow: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; }
+.modal h3 { font: 600 11px var(--font-body); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 4px 0 0; }
+.modal ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.modal .legend-grid { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; }
+.modal .legend-list { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.modal .legend-list .ico { width: 44px; }
+kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; color: var(--fg); }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<style>
+  /* base reset (supplied by the artifact host when hosted on claude.ai) */
+  :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body { margin: 0; }
+  img { max-width: 100%; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <main class="stage" id="stage">
+    <div class="top-float">
+      <div class="legend float" aria-label="Legend">
+        <span class="chip"><span class="dot puck"></span>Puck</span>
+        <span class="chip"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 6H30"/><path d="M27 2.5 31 6 27 9.5"/></svg>Skate</span>
+        <span class="chip"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 6c1.5-4.5 3-4.5 4.5 0s3 4.5 4.5 0 3-4.5 4.5 0 3 4.5 4.5 0 3-4.5 4.5 0H30"/><path d="M27 2.5 31 6 27 9.5"/></svg>With puck</span>
+        <span class="chip"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 6H29" stroke-dasharray="3.5 2.6"/><path d="M27 2.5 31 6 27 9.5"/></svg>Pass / dump</span>
+        <span class="chip"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 4.6H28.5M2 7.4H28.5"/><path d="M27 2.5 31 6 27 9.5"/></svg>Shot</span>
+        <span class="chip"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2.0 6A2.6 2.6 0 0 1 7.2 6M4.0 6A2.6 2.6 0 0 0 9.2 6M10.1 6A2.6 2.6 0 0 1 15.3 6M12.1 6A2.6 2.6 0 0 0 17.3 6M18.2 6A2.6 2.6 0 0 1 23.4 6M20.2 6A2.6 2.6 0 0 0 25.4 6"/><path d="M27 2.5 31 6 27 9.5"/></svg>Backwards</span>
+        <span class="chip"><svg class="ico opp" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 6H29" stroke-dasharray="3.5 2.6"/><path d="M27 2.5 31 6 27 9.5"/></svg>Opponent</span>
+      </div>
+      <div class="top-actions float">
+        <button class="btn" id="scriptToggle" aria-pressed="false" aria-controls="drawer" title="Script (S)">
+          <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z"/></svg><span class="lbl">Script</span>
+        </button>
+        <div class="menu-wrap">
+          <button class="btn icon" id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-label="More">
+            <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128Zm56-12a12,12,0,1,0,12,12A12,12,0,0,0,196,116ZM60,116a12,12,0,1,0,12,12A12,12,0,0,0,60,116Z"/></svg>
+          </button>
+          <div class="menu" id="menu" role="menu" hidden>
+            <button role="menuitem" id="sampleBtn">Load sample breakout</button>
+            <button role="menuitem" id="faceoffBtn">New play from faceoff</button>
+            <hr>
+            <button role="menuitem" id="helpBtn">Legend and shortcuts</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <canvas id="rink" aria-label="Ice hockey rink with a one-metre grid. Drag players and the puck."></canvas>
+
+    <div class="cellpos" id="cellPos" aria-live="off" hidden></div>
+    <div class="board-toast" id="boardToast" role="status" hidden></div>
+
+    <div class="bottom-float float" id="bottomFloat">
+      <div class="transport">
+        <div class="group play-group">
+          <button class="btn icon" id="prevBtn" title="Previous frame (,)" aria-label="Previous frame"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M199.81,34a16,16,0,0,0-16.24.43L64,109.23V40a8,8,0,0,0-16,0V216a8,8,0,0,0,16,0V146.77l119.57,74.78A15.95,15.95,0,0,0,208,208.12V47.88A15.86,15.86,0,0,0,199.81,34ZM192,208,64.16,128,192,48.07Z"/></svg></button>
+          <button class="btn primary" id="playBtn" title="Play (Space)"><svg viewBox="0 0 256 256" id="playIcon" aria-hidden="true"><path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"/></svg><span id="playTxt">Play</span></button>
+          <button class="btn icon" id="nextBtn" title="Next frame (.)" aria-label="Next frame"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M200,32a8,8,0,0,0-8,8v69.23L72.43,34.45A15.95,15.95,0,0,0,48,47.88V208.12a16,16,0,0,0,24.43,13.43L192,146.77V216a8,8,0,0,0,16,0V40A8,8,0,0,0,200,32ZM64,207.93V48.05l127.84,80Z"/></svg></button>
+          <select id="speed" aria-label="Playback speed">
+            <option value="0.5">0.5×</option>
+            <option value="1" selected>1×</option>
+            <option value="2">2×</option>
+          </select>
+        </div>
+        <div class="frames scroll-subtle" id="frames" role="tablist" aria-label="Frames"></div>
+        <div class="group edit-group">
+          <button class="btn" id="backBtn" aria-pressed="false" hidden title="Selected player skates backwards on his next move (B)"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2.0 6A2.6 2.6 0 0 1 7.2 6M4.0 6A2.6 2.6 0 0 0 9.2 6M10.1 6A2.6 2.6 0 0 1 15.3 6M12.1 6A2.6 2.6 0 0 0 17.3 6M18.2 6A2.6 2.6 0 0 1 23.4 6M20.2 6A2.6 2.6 0 0 0 25.4 6"/><path d="M27 2.5 31 6 27 9.5"/></svg><span class="lbl">Backwards</span></button>
+          <button class="btn" id="viaBtn" hidden title="Bend the selected player's next move through a waypoint (W)"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 10C9 10 10 2.5 17 2.5S25 10 31 10"/><circle cx="17" cy="2.6" r="2" fill="#fff"/></svg><span class="lbl">Waypoint</span></button>
+          <button class="btn" id="addBtn" title="Copy this frame and insert it after"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></svg><span class="lbl">Frame</span></button>
+          <button class="btn icon" id="renameBtn" title="Rename frame (or double-click it)" aria-label="Rename frame"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"/></svg></button>
+          <button class="btn icon" id="delBtn" title="Delete frame" aria-label="Delete frame"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="scrim" id="scrim"></div>
+
+  <aside class="drawer" id="drawer" aria-label="Play script">
+    <div class="drawer-inner">
+      <div class="drawer-head">
+        <div>
+          <h2>Play script</h2>
+          <span class="status" id="scriptStatus"></span>
+        </div>
+        <button class="btn ghost icon" id="drawerClose" aria-label="Close script"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
+      </div>
+      <div class="drawer-body">
+        <textarea class="scroll-subtle" id="script" spellcheck="false" aria-label="Play script"></textarea>
+        <ul class="errors scroll-subtle" id="errors"></ul>
+        <div class="row">
+          <button class="btn primary" id="applyBtn">Apply to board</button>
+          <button class="btn" id="revertBtn">Revert</button>
+          <button class="btn" id="copyBtn">Copy</button>
+          <span class="toast" id="toast"></span>
+        </div>
+        <details class="syntax">
+          <summary>Script syntax</summary>
+<pre><b>frame Name</b>      new frame, copies the previous one
+<b>HC 22,10</b>        home centre to cell x=22, y=10
+<b>puck HC</b>         puck on that player's stick
+<b>puck 54,15</b>      loose puck (pass, rim, dump)
+<b>puck 54,15 shot</b> draw it as a shot
+<b>ALD 34,10 back</b>  skate there backwards
+<b>HLW 42,22 via 36,25 39,24</b>
+                curve through waypoints on the way
+<b># note</b>          comment
+
+IDs  HLW HC HRW HLD HRD HG
+     ALW AC ARW ALD ARD AG
+x 0–59 left → right, y 0–29 bottom → top</pre>
+        </details>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="modal-back" id="help" hidden>
+  <div class="modal scroll-subtle" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal-head">
+      <h2 id="helpTitle">Legend and shortcuts</h2>
+      <button class="btn ghost icon" id="helpClose" aria-label="Close"><svg viewBox="0 0 256 256" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
+    </div>
+    <h3>On the ice</h3>
+    <div class="legend-grid">
+      <span class="chip"><span class="dot home"></span>Home (H…), attacks right</span>
+      <span class="chip"><span class="dot away"></span>Away (A…)</span>
+      <span class="chip"><span class="dot puck"></span>The puck</span>
+    </div>
+    <div class="legend-list">
+      <span class="chip"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 6H30"/><path d="M27 2.5 31 6 27 9.5"/></svg>Skate without the puck</span>
+      <span class="chip"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 6c1.5-4.5 3-4.5 4.5 0s3 4.5 4.5 0 3-4.5 4.5 0 3 4.5 4.5 0 3-4.5 4.5 0H30"/><path d="M27 2.5 31 6 27 9.5"/></svg>Skate with the puck</span>
+      <span class="chip"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 6H29" stroke-dasharray="3.5 2.6"/><path d="M27 2.5 31 6 27 9.5"/></svg>Pass, rim or dump the puck</span>
+      <span class="chip"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 4.6H28.5M2 7.4H28.5"/><path d="M27 2.5 31 6 27 9.5"/></svg>Shoot the puck</span>
+      <span class="chip"><svg class="ico" viewBox="0 0 34 12" aria-hidden="true"><path d="M2.0 6A2.6 2.6 0 0 1 7.2 6M4.0 6A2.6 2.6 0 0 0 9.2 6M10.1 6A2.6 2.6 0 0 1 15.3 6M12.1 6A2.6 2.6 0 0 0 17.3 6M18.2 6A2.6 2.6 0 0 1 23.4 6M20.2 6A2.6 2.6 0 0 0 25.4 6"/><path d="M27 2.5 31 6 27 9.5"/></svg>Skate backwards</span>
+      <span class="chip"><svg class="ico opp" viewBox="0 0 34 12" aria-hidden="true"><path d="M2 6H29" stroke-dasharray="3.5 2.6"/><path d="M27 2.5 31 6 27 9.5"/></svg>Greyed out: opposing team action</span>
+    </div>
+    <h3>Editing</h3>
+    <ul>
+      <li>Drag players and the puck. Drop the puck on a player to give him possession.</li>
+      <li>Passes fly straight to where the receiver ends the frame. The passer releases just in time.</li>
+      <li>A loose puck in front of the net is drawn as a shot. Select a player and press <b>Backwards</b> to mark his next move.</li>
+      <li>Bend a move: select a player and press <b>Waypoint</b>, or double-tap on his arrow. Drag the white handle to shape the curve; double-tap it to remove it.</li>
+      <li>Each frame shows where everyone stands and, with arrows, what they do next. The last frame has no arrows.</li>
+      <li>Every change shows up in the script, and script edits apply back to the board.</li>
+    </ul>
+    <h3>Keys</h3>
+    <ul>
+      <li><kbd>Space</kbd> play or pause</li>
+      <li><kbd>,</kbd> <kbd>.</kbd> previous / next frame</li>
+      <li><kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> nudge the selected token one cell</li>
+      <li><kbd>W</kbd> add a waypoint to the selected player's next move</li>
+      <li><kbd>B</kbd> toggle backwards skating for the selected player's next move</li>
+      <li><kbd>S</kbd> open or close the script · <kbd>Esc</kbd> close panels</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ---------- Rink geometry (metres). Swiss National League uses the IIHF 60 x 30 m surface. ----------
+  const L = 60, W = 30, R = 8.5;           // length, width, corner radius
+  const GL = 4;                              // goal line distance from end boards
+  const BL = GL + (L - 2 * GL) / 3;          // blue line: zones split into three equal parts (≈21.33 m)
+  const CIRCLE_R = 4.5;
+  const END_SPOT_X = GL + 6, SPOT_DY = 7;    // end-zone faceoff spots
+  const NEU_SPOT_X = BL + 1.5;               // neutral-zone faceoff spots
+  const CREASE_R = 1.8, GOAL_W = 1.83, GOAL_D = 1.12;
+  const COLS = L, ROWS = W;                  // 1 m cells
+  const TOKEN_R = 0.95;
+
+  const HOME = ['HLW', 'HC', 'HRW', 'HLD', 'HRD', 'HG'];
+  const AWAY = ['ALW', 'AC', 'ARW', 'ALD', 'ARD', 'AG'];
+  const ALL = [...HOME, ...AWAY];
+  const isHome = id => id[0] === 'H';
+  const ROLE = { LW: 'left wing', C: 'centre', RW: 'right wing', LD: 'left D', RD: 'right D', G: 'goalie' };
+
+  const FACEOFF = {
+    HG: [4, 14], HLD: [18, 20], HRD: [18, 9], HLW: [27, 19], HC: [28, 14], HRW: [27, 10],
+    AG: [55, 14], ALD: [41, 9], ARD: [41, 20], ALW: [32, 10], AC: [31, 14], ARW: [32, 19]
+  };
+
+  const SAMPLE = `# Breakout: D-to-D, up the strong-side wall, middle-lane entry
+frame Retrieve
+HG  4,14
+HLD 2,17
+HRD 7,8
+HC  9,14
+HLW 18,25
+HRW 18,4
+AG  55,14
+AC  6,19
+ALW 13,9
+ARW 14,22
+ALD 30,9
+ARD 30,20
+puck HLD
+
+frame D to D
+HRD 4,9
+HC  10,12
+HLW 20,26
+HRW 16,2
+AC  4,15
+ALW 12,7
+puck HRD
+
+frame Up the wall
+HRD 6,6
+HC  14,8
+HLW 24,22
+HRW 18,2
+AC  6,10
+ALW 16,5
+ARW 18,18
+ALD 28,7
+puck HRW
+
+frame Middle lane
+HC  22,10 via 18,7
+HRW 24,3
+HLW 30,22
+HLD 12,18
+HRD 14,6
+AC  12,10
+ALW 20,4
+ARW 22,18
+ALD 34,10 back
+ARD 34,20 back
+puck HC
+
+frame Zone entry
+HC  40,12
+HLW 42,22 via 36,25
+HRW 41,4
+HLD 24,19
+HRD 24,8
+AC  32,13
+ALW 30,6
+ARW 32,22
+ALD 46,11 back
+ARD 46,19 back
+puck HC
+
+frame Shot
+HC  45,12
+HLW 52,19 via 48,23
+HRW 50,6
+HLD 34,20
+HRD 34,9
+AC  40,13
+ALD 49,11
+ARD 52,17
+puck 54,15 shot
+`;
+
+  // ---------- Grid helpers ----------
+  function inside(x, y, m = 0) {
+    if (x < m || x > L - m || y < m || y > W - m) return false;
+    const cx = Math.min(Math.max(x, R), L - R);
+    const cy = Math.min(Math.max(y, R), W - R);
+    return (x - cx) ** 2 + (y - cy) ** 2 <= (R - m) ** 2;
+  }
+  const validCell = (x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && x < COLS && y >= 0 && y < ROWS && inside(x + 0.5, y + 0.5, 0.3);
+  function snapCell(wx, wy) {
+    const cx = Math.min(COLS - 1, Math.max(0, Math.floor(wx)));
+    const cy = Math.min(ROWS - 1, Math.max(0, Math.floor(wy)));
+    if (validCell(cx, cy)) return [cx, cy];
+    let best = null, bd = Infinity;
+    for (let dx = -5; dx <= 5; dx++) for (let dy = -5; dy <= 5; dy++) {
+      const x = cx + dx, y = cy + dy;
+      if (!validCell(x, y)) continue;
+      const d = (x + 0.5 - wx) ** 2 + (y + 0.5 - wy) ** 2;
+      if (d < bd) { bd = d; best = [x, y]; }
+    }
+    return best || [29, 14];
+  }
+  function zoneOf(x) {
+    const m = x + 0.5;
+    if (m < BL) return 'Home defensive zone';
+    if (m > L - BL) return 'Home offensive zone';
+    return 'Neutral zone';
+  }
+  const clone = o => JSON.parse(JSON.stringify(o));
+
+  // ---------- Script parse / export ----------
+  function parse(text) {
+    const frames = [], errors = [];
+    let cur = null;
+    text.split('\n').forEach((raw, i) => {
+      const line = raw.replace(/#.*/, '').trim();
+      if (!line) return;
+      const fm = line.match(/^frame\b\s*(.*)$/i);
+      if (fm) {
+        const name = fm[1].replace(/^"(.*)"$/, '$1').trim() || ('Frame ' + (frames.length + 1));
+        cur = cur ? { name, pos: clone(cur.pos), puck: cur.puck.holder ? { holder: cur.puck.holder } : { at: clone(cur.puck.at) }, back: [], via: {} } : { name, pos: {}, puck: { at: [29, 14] }, back: [], via: {} };
+        frames.push(cur);
+        return;
+      }
+      if (!cur) { cur = { name: 'Frame 1', pos: {}, puck: { at: [29, 14] }, back: [], via: {} }; frames.push(cur); }
+      const pm = line.match(/^puck\s+(.+)$/i);
+      if (pm) {
+        const arg = pm[1].trim();
+        const c = arg.match(/^(-?\d+)\s*,\s*(-?\d+)(?:\s+(shot|shoot))?$/i);
+        if (c) {
+          const x = +c[1], y = +c[2];
+          if (!validCell(x, y)) errors.push(`Line ${i + 1}: cell ${x},${y} is outside the ice`);
+          else cur.puck = c[3] ? { at: [x, y], shot: true } : { at: [x, y] };
+        } else {
+          const id = arg.toUpperCase();
+          if (!ALL.includes(id)) errors.push(`Line ${i + 1}: unknown player "${arg}"`);
+          else cur.puck = { holder: id };
+        }
+        return;
+      }
+      const sm = line.match(/^([A-Za-z]+)\s+(-?\d+)\s*,\s*(-?\d+)(.*)$/);
+      if (sm) {
+        const id = sm[1].toUpperCase(), x = +sm[2], y = +sm[3];
+        if (!ALL.includes(id)) { errors.push(`Line ${i + 1}: unknown player "${sm[1]}"`); return; }
+        if (!validCell(x, y)) { errors.push(`Line ${i + 1}: cell ${x},${y} is outside the ice`); return; }
+        let back = false, inVia = false;
+        const via = [];
+        const words = sm[4].replace(/\s*,\s*/g, ',').trim().split(/\s+/).filter(Boolean);
+        for (const wd of words) {
+          if (/^(back|backwards|bw)$/i.test(wd)) { back = true; inVia = false; continue; }
+          if (/^via$/i.test(wd)) { inVia = true; continue; }
+          const c = wd.match(/^(-?\d+),(-?\d+)$/);
+          if (c && inVia) {
+            const vx = +c[1], vy = +c[2];
+            if (!validCell(vx, vy)) { errors.push(`Line ${i + 1}: waypoint ${vx},${vy} is outside the ice`); return; }
+            via.push([vx, vy]); continue;
+          }
+          errors.push(`Line ${i + 1}: can't read "${wd}". Use "back" or "via x,y x,y".`); return;
+        }
+        cur.pos[id] = [x, y];
+        if (back && !cur.back.includes(id)) cur.back.push(id);
+        if (via.length) cur.via[id] = via; else delete cur.via[id];
+        return;
+      }
+      errors.push(`Line ${i + 1}: can't read "${raw.trim()}"`);
+    });
+    if (!frames.length) errors.push('The script has no frames yet. Start with "frame Name".');
+    frames.forEach((f, i) => ALL.forEach(id => {
+      if (!f.pos[id]) f.pos[id] = i ? clone(frames[i - 1].pos[id]) : clone(FACEOFF[id]);
+    }));
+    return { frames, errors };
+  }
+
+  const puckKey = p => p.holder ? p.holder : p.at.join(',');
+  const isBack = (f, id) => Array.isArray(f.back) && f.back.includes(id);
+  function toScript(frames) {
+    const out = [
+      '# Rink Grid script · 1 cell = 1 m',
+      '# x 0–59 left → right, y 0–29 bottom → top. Home (H…) attacks right.',
+      ''
+    ];
+    frames.forEach((f, i) => {
+      const prev = frames[i - 1];
+      out.push('frame ' + f.name);
+      ALL.forEach(id => {
+        const p = f.pos[id];
+        const back = prev && isBack(f, id);
+        const via = prev ? viaOf(f, id) : [];
+        if (!prev || back || via.length || prev.pos[id][0] !== p[0] || prev.pos[id][1] !== p[1])
+          out.push(id.padEnd(4) + p[0] + ',' + p[1] + (back ? ' back' : '') + (via.length ? ' via ' + via.map(v => v.join(',')).join(' ') : ''));
+      });
+      if (!prev || puckKey(prev.puck) !== puckKey(f.puck) || f.puck.shot) out.push('puck ' + puckKey(f.puck) + (f.puck.shot ? ' shot' : ''));
+      out.push('');
+    });
+    return out.join('\n');
+  }
+
+  // ---------- State ----------
+  let frames, cur = 0, selected = null, hover = null;
+  let playing = false, t = 0, lastTs = 0;
+  let drag = null;
+  let scriptDirty = false;
+  let renaming = false;
+
+  function load() {
+    try {
+      const s = localStorage.getItem('rinkgrid.v1');
+      if (s) { const f = JSON.parse(s); if (Array.isArray(f) && f.length) return f; }
+    } catch (e) {}
+    return parse(SAMPLE).frames;
+  }
+  function save() { try { localStorage.setItem('rinkgrid.v1', JSON.stringify(frames)); } catch (e) {} }
+  frames = load();
+
+  // ---------- Canvas ----------
+  const canvas = document.getElementById('rink');
+  const ctx = canvas.getContext('2d');
+  const stageEl = document.getElementById('stage');
+  const PAD = { l: 26, r: 6, t: 6, b: 22 };
+  let s = 10, cssW = 600, cssH = 320;
+  const C = {};
+  function readColors() {
+    const cs = getComputedStyle(document.documentElement);
+    ['ice', 'ice-grid', 'ice-grid-strong', 'rink-red', 'rink-blue', 'crease', 'boards', 'hover-cell', 'accent', 'away', 'muted', 'fg']
+      .forEach(k => C[k] = cs.getPropertyValue('--' + k).trim());
+  }
+  function resize() {
+    const bf = document.getElementById('bottomFloat');
+    stageEl.style.paddingBottom = (bf.offsetHeight + 40) + 'px';
+    const cp = document.getElementById('cellPos');
+    cp.style.bottom = (bf.offsetHeight + 18) + 'px';
+    cp.style.right = Math.max(16, (stageEl.clientWidth - bf.offsetWidth) / 2 + 6) + 'px';
+    const st = getComputedStyle(stageEl);
+    const availW = stageEl.clientWidth - parseFloat(st.paddingLeft) - parseFloat(st.paddingRight);
+    const availH = stageEl.clientHeight - parseFloat(st.paddingTop) - parseFloat(st.paddingBottom);
+    s = Math.max(4, Math.min((availW - PAD.l - PAD.r) / L, (availH - PAD.t - PAD.b) / W));
+    cssW = PAD.l + L * s + PAD.r;
+    cssH = PAD.t + W * s + PAD.b;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  const px = x => PAD.l + x * s;
+  const py = y => PAD.t + (W - y) * s;
+  const toWorld = (cx, cy) => [(cx - PAD.l) / s, W - (cy - PAD.t) / s];
+
+  function rinkPath() {
+    const x0 = px(0), y0 = py(W), w = L * s, h = W * s, r = R * s;
+    ctx.beginPath();
+    ctx.moveTo(x0 + r, y0);
+    ctx.arcTo(x0 + w, y0, x0 + w, y0 + h, r);
+    ctx.arcTo(x0 + w, y0 + h, x0, y0 + h, r);
+    ctx.arcTo(x0, y0 + h, x0, y0, r);
+    ctx.arcTo(x0, y0, x0 + w, y0, r);
+    ctx.closePath();
+  }
+  function vline(x, width, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(px(x - width / 2), py(W), Math.max(width * s, 1), W * s);
+  }
+  function circle(x, y, r, stroke, lw, fill) {
+    ctx.beginPath(); ctx.arc(px(x), py(y), r * s, 0, Math.PI * 2);
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+  }
+
+  function drawRink() {
+    ctx.save();
+    rinkPath(); ctx.fillStyle = C.ice; ctx.fill();
+    rinkPath(); ctx.clip();
+
+    const gw = s < 10 ? 0.5 : 1;   // hairline grid on small screens
+    for (let x = 1; x < COLS; x++) {
+      ctx.fillStyle = x % 5 === 0 ? C['ice-grid-strong'] : C['ice-grid'];
+      ctx.fillRect(px(x) - gw / 2, py(W), gw, W * s);
+    }
+    for (let y = 1; y < ROWS; y++) {
+      ctx.fillStyle = y % 5 === 0 ? C['ice-grid-strong'] : C['ice-grid'];
+      ctx.fillRect(px(0), py(y) - gw / 2, L * s, gw);
+    }
+    if (hover) { ctx.fillStyle = C['hover-cell']; ctx.fillRect(px(hover[0]), py(hover[1] + 1), s, s); }
+
+    vline(GL, 0.05, C['rink-red']); vline(L - GL, 0.05, C['rink-red']);
+    vline(BL, 0.3, C['rink-blue']); vline(L - BL, 0.3, C['rink-blue']);
+    vline(L / 2, 0.3, C['rink-red']);
+
+    const lw = Math.max(0.75, 0.05 * s);
+    circle(L / 2, W / 2, CIRCLE_R, C['rink-blue'], lw);
+    circle(L / 2, W / 2, 0.15, null, 0, C['rink-blue']);
+    [END_SPOT_X, L - END_SPOT_X].forEach(x => [W / 2 - SPOT_DY, W / 2 + SPOT_DY].forEach(y => {
+      circle(x, y, CIRCLE_R, C['rink-red'], lw);
+      circle(x, y, 0.3, null, 0, C['rink-red']);
+    }));
+    [NEU_SPOT_X, L - NEU_SPOT_X].forEach(x => [W / 2 - SPOT_DY, W / 2 + SPOT_DY].forEach(y => circle(x, y, 0.3, null, 0, C['rink-red'])));
+
+    [[GL, 1], [L - GL, -1]].forEach(([x, dir]) => {
+      ctx.beginPath();
+      ctx.moveTo(px(x), py(W / 2 + CREASE_R));
+      ctx.arc(px(x), py(W / 2), CREASE_R * s, -Math.PI / 2, Math.PI / 2, dir < 0);
+      ctx.closePath();
+      ctx.fillStyle = C.crease; ctx.fill();
+      ctx.strokeStyle = C['rink-red']; ctx.lineWidth = lw; ctx.stroke();
+      const gx = dir > 0 ? x - GOAL_D : x;
+      ctx.strokeStyle = C['rink-red']; ctx.lineWidth = Math.max(1, 0.08 * s);
+      ctx.strokeRect(px(gx), py(W / 2 + GOAL_W / 2), GOAL_D * s, GOAL_W * s);
+    });
+    ctx.restore();
+
+    rinkPath(); ctx.strokeStyle = C.boards; ctx.lineWidth = Math.max(1.25, 0.18 * s); ctx.stroke();
+
+    ctx.fillStyle = C.muted;
+    ctx.font = `${Math.max(8, Math.min(11, s * 0.75))}px "JetBrains Mono", monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let x = 0; x < COLS; x += 5) ctx.fillText(String(x), px(x + 0.5), py(0) + 6);
+    ctx.fillText('59', px(59.5), py(0) + 6);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let y = 0; y < ROWS; y += 5) ctx.fillText(String(y), px(0) - 6, py(y + 0.5));
+    ctx.fillText('29', px(0) - 6, py(29.5));
+  }
+
+  // ---------- Positions ----------
+  const ease = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+  const cellW = c => [c[0] + 0.5, c[1] + 0.5];
+  function stickOffset(id, p) { const d = isHome(id) ? 1 : -1; return [p[0] + d * 0.8, p[1] - 0.55]; }
+  function puckW(frame, playerPos) {
+    if (frame.puck.holder) return stickOffset(frame.puck.holder, playerPos(frame.puck.holder));
+    return cellW(frame.puck.at);
+  }
+  function snapshot() {
+    const A = frames[cur];
+    if (!playing || !frames[cur + 1]) {
+      const pos = id => cellW(A.pos[id]);
+      const out = {}; ALL.forEach(id => out[id] = pos(id));
+      out.P = puckW(A, pos);
+      return out;
+    }
+    const B = frames[cur + 1];
+    const pos = id => lerpPos(A, B, id, t);
+    const out = {}; ALL.forEach(id => out[id] = pos(id));
+    if (A.puck.holder && A.puck.holder === B.puck.holder) out.P = stickOffset(A.puck.holder, pos(A.puck.holder));
+    else {
+      const plan = passPlan(A, B);
+      if (t < plan.t0) out.P = plan.fromAt(t);
+      else {
+        const kp = plan.t0 >= 1 ? 1 : (t - plan.t0) / (1 - plan.t0);
+        out.P = [plan.from[0] + (plan.to[0] - plan.from[0]) * kp, plan.from[1] + (plan.to[1] - plan.from[1]) * kp];
+      }
+    }
+    return out;
+  }
+
+  // ---------- Passes ----------
+  // A puck can't curve. It travels in a straight line at constant speed to where the
+  // receiver's stick will be at the END of the frame (a lead pass). The release is timed
+  // backwards from that arrival, so the passer carries the puck until the right moment.
+  const PASS_SPEED = 25; // metres per frame (≈19 m/s at 1× playback)
+  // ---------- Skating paths ----------
+  // A move runs from the player's cell in frame A through optional waypoints to his cell in
+  // frame B. Waypoints are stored on frame B (B.via[id]) and joined with a Catmull-Rom curve.
+  const viaOf = (B, id) => (B.via && B.via[id]) || [];
+  function ctrlPts(A, B, id) { return [cellW(A.pos[id]), ...viaOf(B, id).map(cellW), cellW(B.pos[id])]; }
+  function spline(c) {
+    if (c.length === 2) return c;
+    const out = [], n = c.length;
+    for (let i = 0; i < n - 1; i++) {
+      const p0 = c[Math.max(0, i - 1)], p1 = c[i], p2 = c[i + 1], p3 = c[Math.min(n - 1, i + 2)];
+      const seg = Math.max(6, Math.ceil(Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) / 0.2));
+      for (let k = 0; k < seg; k++) {
+        const t = k / seg, t2 = t * t, t3 = t2 * t;
+        const f = j => 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3);
+        out.push([f(0), f(1)]);
+      }
+    }
+    out.push(c[n - 1]);
+    return out;
+  }
+  function measure(pts) {
+    const cum = [0];
+    for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    return { pts, cum, len: cum[cum.length - 1] };
+  }
+  function at(m, d) {
+    const { pts, cum, len } = m;
+    if (pts.length < 2 || len === 0) return { p: pts[0], ux: 1, uy: 0 };
+    d = Math.max(0, Math.min(len, d));
+    let lo = 0, hi = cum.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (cum[mid] <= d) lo = mid; else hi = mid; }
+    const a = pts[lo], b = pts[hi], sl = cum[hi] - cum[lo] || 1, f = (d - cum[lo]) / sl;
+    return { p: [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f], ux: (b[0] - a[0]) / sl, uy: (b[1] - a[1]) / sl };
+  }
+  const movePath = (A, B, id) => measure(spline(ctrlPts(A, B, id)));
+  function lerpPos(A, B, id, tt) {
+    const m = movePath(A, B, id);
+    return at(m, ease(tt) * m.len).p;
+  }
+  function passPlan(A, B) {
+    const to = puckW(B, id => cellW(B.pos[id]));
+    const fromAt = tt => A.puck.holder ? stickOffset(A.puck.holder, lerpPos(A, B, A.puck.holder, tt)) : cellW(A.puck.at);
+    let t0 = 0;
+    for (let i = 0; i < 5; i++) {
+      const f = fromAt(t0);
+      t0 = Math.max(0, 1 - Math.hypot(to[0] - f[0], to[1] - f[1]) / PASS_SPEED);
+    }
+    return { t0, from: fromAt(t0), to, fromAt };
+  }
+
+  // ---------- Playbook arrows ----------
+  // skate: solid · carry: wavy · pass: dashed · shot: double line · back: loops
+  // Home team in ink, opposing team greyed out.
+  const INK = '#16232f', OPP = '#a7b0b9';
+  const teamInk = id => isHome(id) ? INK : OPP;
+  function nearGoal(p) {
+    return [GL, L - GL].some(gx => Math.abs(p[0] - gx) < 2.5 && Math.abs(p[1] - W / 2) < 2.5);
+  }
+  // Draws one playbook arrow along path m, from distance s0 to s1.
+  function playbookArrow(m, style, color, s0, s1, head = true) {
+    if (s1 - s0 < 0.5) return;
+    const P = (d, off = 0) => { const q = at(m, d); return [q.p[0] - q.uy * off, q.p[1] + q.ux * off]; };
+    const line = pts => {
+      ctx.beginPath();
+      pts.forEach((q, i) => i ? ctx.lineTo(px(q[0]), py(q[1])) : ctx.moveTo(px(q[0]), py(q[1])));
+      ctx.stroke();
+    };
+    const run = (a, b, off = 0) => { const pts = []; for (let d = a; d < b; d += 0.15) pts.push(P(d, off)); pts.push(P(b, off)); return pts; };
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(0.9, 0.11 * s);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const tail = head ? 0.45 : 0;  // short straight run into the arrowhead
+    if (style === 'skate') line(run(s0, s1));
+    else if (style === 'pass') {
+      ctx.setLineDash([0.55 * s, 0.4 * s]); line(run(s0, s1)); ctx.setLineDash([]);
+    } else if (style === 'shot') {
+      line(run(s0, s1 - 0.2, 0.14)); line(run(s0, s1 - 0.2, -0.14));
+    } else if (style === 'carry') {
+      const lam = 1.4, amp = 0.34, end = s1 - tail, pts = [];
+      for (let d = s0; d <= end; d += 0.06) {
+        const taper = Math.min(1, (end - d) / (lam / 2), (d - s0) / (lam / 4) + 0.001);
+        pts.push(P(d, amp * taper * Math.sin(((d - s0) / lam) * 2 * Math.PI)));
+      }
+      line([...pts, ...run(Math.max(s0, end), s1)]);
+    } else if (style === 'back') {
+      // playbook symbol: separate half circles, an arch above the line then a bowl below it,
+      // every end touching the line, each bowl overlapping the arch before it like chain links
+      const r = 0.4, period = 3.1 * r, shift = 0.78 * r, end = s1 - tail;
+      const half = (c, up) => {
+        const q = at(m, c), pts = [];
+        for (let k = 0; k <= 16; k++) {
+          const th = Math.PI * (1 - k / 16);           // left end → right end
+          const cu = r * Math.cos(th), cn = (up ? 1 : -1) * r * Math.sin(th);
+          pts.push([q.p[0] + q.ux * cu - q.uy * cn, q.p[1] + q.uy * cu + q.ux * cn]);
+        }
+        line(pts);
+      };
+      for (let c = s0 + r; c + shift + r <= end; c += period) { half(c, true); half(c + shift, false); }
+    }
+    if (head) {
+      const q = at(m, s1), tip = q.p, ux = q.ux, uy = q.uy, h = 0.65, sp = 0.6;
+      const back1 = [tip[0] - h * (ux * Math.cos(sp) - uy * Math.sin(sp)), tip[1] - h * (uy * Math.cos(sp) + ux * Math.sin(sp))];
+      const back2 = [tip[0] - h * (ux * Math.cos(sp) + uy * Math.sin(sp)), tip[1] - h * (uy * Math.cos(sp) - ux * Math.sin(sp))];
+      line([back1, tip, back2]);
+    }
+    ctx.restore();
+  }
+
+  function drawMoves(P, F) {
+    const plan = puckKey(P.puck) !== puckKey(F.puck) ? passPlan(P, F) : null;
+    ALL.forEach(id => {
+      const m = movePath(P, F, id);
+      if (m.len < 0.01) return;
+      const color = teamInk(id);
+      const end = m.len - (TOKEN_R + 0.15);
+      if (isBack(F, id)) { playbookArrow(m, 'back', color, 0, end); return; }
+      if (P.puck.holder === id && F.puck.holder === id) { playbookArrow(m, 'carry', color, 0, end); return; }
+      if (P.puck.holder === id && plan) {
+        // carries until the release point, then skates on without it
+        const dRel = ease(plan.t0) * m.len;
+        if (dRel > 0.6) playbookArrow(m, 'carry', color, 0, Math.min(dRel, end), dRel >= end);
+        if (end - dRel > 0.5) playbookArrow(m, 'skate', color, dRel, end);
+        return;
+      }
+      playbookArrow(m, 'skate', color, 0, end);
+    });
+    if (plan) {
+      const shot = !F.puck.holder && (F.puck.shot || nearGoal(plan.to));
+      const color = P.puck.holder ? teamInk(P.puck.holder) : INK;
+      const m = measure([plan.from, plan.to]);
+      playbookArrow(m, shot ? 'shot' : 'pass', color, 0.35, m.len - (F.puck.holder ? 0.5 : 0.1));
+    }
+  }
+
+  // waypoint handles for the selected player's next move
+  function drawHandles() {
+    if (playing || !selected || selected === 'P' || cur >= frames.length - 1) return;
+    viaOf(frames[cur + 1], selected).forEach(v => {
+      const [x, y] = cellW(v);
+      ctx.beginPath(); ctx.arc(px(x), py(y), Math.max(3.5, 0.42 * s), 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff'; ctx.fill();
+      ctx.lineWidth = Math.max(1, 0.12 * s); ctx.strokeStyle = isHome(selected) ? C.accent : C.away; ctx.stroke();
+    });
+  }
+
+  function draw() {
+    if (!C.ice) readColors();
+    ctx.clearRect(0, 0, cssW, cssH);
+    drawRink();
+    const snap = snapshot();
+    // each frame shows what happens next: arrows run from this frame into the following one
+    if (!playing && cur < frames.length - 1) drawMoves(frames[cur], frames[cur + 1]);
+    drawHandles();
+
+    ALL.forEach(id => {
+      const [x, y] = snap[id];
+      const home = isHome(id), goalie = id.endsWith('G');
+      ctx.beginPath(); ctx.arc(px(x), py(y), TOKEN_R * s, 0, Math.PI * 2);
+      ctx.fillStyle = home ? C.accent : C.away; ctx.fill();
+      ctx.lineWidth = Math.max(0.75, 0.1 * s);
+      ctx.strokeStyle = goalie ? '#f2c230' : 'rgba(255,255,255,0.9)'; ctx.stroke();
+      if (selected === id) {
+        ctx.beginPath(); ctx.arc(px(x), py(y), (TOKEN_R + 0.35) * s, 0, Math.PI * 2);
+        ctx.strokeStyle = '#142230'; ctx.lineWidth = Math.max(1, 0.1 * s); ctx.setLineDash([Math.max(2, 0.2 * s), Math.max(1.5, 0.15 * s)]); ctx.stroke(); ctx.setLineDash([]);
+      }
+      ctx.fillStyle = '#fff';
+      ctx.font = `700 ${Math.min(TOKEN_R * s * (id.length > 2 ? 0.95 : 1.2), Math.max(5, s * (id.length > 2 ? 0.78 : 0.95)))}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(id.slice(1), px(x), py(y) + 0.5);
+    });
+
+    const [qx, qy] = snap.P;
+    ctx.beginPath(); ctx.arc(px(qx), py(qy), Math.max(2.2, 0.38 * s), 0, Math.PI * 2);
+    ctx.fillStyle = '#0b0b0b'; ctx.fill();
+    ctx.lineWidth = Math.max(0.75, 0.08 * s); ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.stroke();
+    if (selected === 'P') {
+      ctx.beginPath(); ctx.arc(px(qx), py(qy), Math.max(4, 0.75 * s), 0, Math.PI * 2);
+      ctx.strokeStyle = '#142230'; ctx.lineWidth = Math.max(1, 0.1 * s); ctx.setLineDash([Math.max(2, 0.2 * s), Math.max(1.5, 0.15 * s)]); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+
+  // ---------- Interaction on the ice ----------
+  function pointerWorld(e) {
+    const r = canvas.getBoundingClientRect();
+    return toWorld(e.clientX - r.left, e.clientY - r.top);
+  }
+  function hit(w) {
+    const snap = snapshot();
+    if (Math.hypot(snap.P[0] - w[0], snap.P[1] - w[1]) < 0.75) return 'P';
+    for (let i = ALL.length - 1; i >= 0; i--) {
+      const p = snap[ALL[i]];
+      if (Math.hypot(p[0] - w[0], p[1] - w[1]) < TOKEN_R + 0.25) return ALL[i];
+    }
+    return null;
+  }
+  // waypoint of the selected player's next move under w
+  function hitVia(w) {
+    if (!selected || selected === 'P' || cur >= frames.length - 1) return -1;
+    return viaOf(frames[cur + 1], selected).findIndex(v => Math.hypot(v[0] + 0.5 - w[0], v[1] + 0.5 - w[1]) < 0.7);
+  }
+  // nearest next-move path to w: { id, seg } where seg is the control segment to split
+  function hitPath(w) {
+    if (cur >= frames.length - 1) return null;
+    const A = frames[cur], B = frames[cur + 1];
+    let best = null, bd = 0.8;
+    ALL.forEach(id => {
+      const m = movePath(A, B, id);
+      if (m.len < 2) return;
+      m.pts.forEach(p => { const d = Math.hypot(p[0] - w[0], p[1] - w[1]); if (d < bd) { bd = d; best = id; } });
+    });
+    if (!best) return null;
+    const c = ctrlPts(A, B, best);
+    let seg = 0, sd = Infinity;
+    for (let i = 0; i < c.length - 1; i++) {
+      const [ax, ay] = c[i], [bx, by] = c[i + 1], dx = bx - ax, dy = by - ay;
+      const k = Math.max(0, Math.min(1, ((w[0] - ax) * dx + (w[1] - ay) * dy) / (dx * dx + dy * dy || 1)));
+      const d = Math.hypot(ax + dx * k - w[0], ay + dy * k - w[1]);
+      if (d < sd) { sd = d; seg = i; }
+    }
+    return { id: best, seg };
+  }
+  function nextFrameVia(id) {
+    const B = frames[cur + 1];
+    if (!B.via) B.via = {};
+    if (!B.via[id]) B.via[id] = [];
+    return B.via[id];
+  }
+  function removeVia(id, i) {
+    const B = frames[cur + 1], list = nextFrameVia(id);
+    list.splice(i, 1);
+    if (!list.length) delete B.via[id];
+  }
+  function addViaAt(id, seg, cell) {
+    nextFrameVia(id).splice(seg, 0, cell);
+  }
+  // adds a waypoint halfway along the longest stretch of the selected player's next move
+  function addViaMid() {
+    if (!selected || selected === 'P' || cur >= frames.length - 1) return;
+    const c = ctrlPts(frames[cur], frames[cur + 1], selected);
+    let seg = 0, best = 0;
+    for (let i = 0; i < c.length - 1; i++) { const d = Math.hypot(c[i + 1][0] - c[i][0], c[i + 1][1] - c[i][1]); if (d > best) { best = d; seg = i; } }
+    if (best < 2) { flashBoard('Move the player in the next frame first'); return; }
+    const mid = [(c[seg][0] + c[seg + 1][0]) / 2, (c[seg][1] + c[seg + 1][1]) / 2];
+    // nudge sideways so the bend is visible straight away
+    const dx = c[seg + 1][0] - c[seg][0], dy = c[seg + 1][1] - c[seg][1];
+    const off = Math.min(2.5, best / 4);
+    addViaAt(selected, seg, snapCell(mid[0] - dy / best * off, mid[1] + dx / best * off));
+    changed();
+  }
+
+  let lastTap = { t: 0, w: [0, 0] };
+  canvas.addEventListener('pointerdown', e => {
+    if (playing) return;
+    const w = pointerWorld(e);
+    const now = performance.now();
+    const dbl = now - lastTap.t < 330 && Math.hypot(w[0] - lastTap.w[0], w[1] - lastTap.w[1]) < 1;
+    lastTap = { t: dbl ? 0 : now, w };
+
+    if (dbl) {
+      // double-tap: on a waypoint removes it, on an arrow adds one
+      const vi = hitVia(w);
+      if (vi >= 0) { removeVia(selected, vi); changed(); return; }
+      if (!hit(w)) {
+        const hp = hitPath(w);
+        if (hp) { selected = hp.id; addViaAt(hp.id, hp.seg, snapCell(w[0], w[1])); changed(); return; }
+      }
+    }
+    const vi = hitVia(w);
+    if (vi >= 0) {
+      drag = { via: vi, id: selected };
+      canvas.setPointerCapture(e.pointerId); canvas.className = 'grabbing';
+      draw(); return;
+    }
+    const id = hit(w);
+    selected = id;
+    if (id) { drag = id; canvas.setPointerCapture(e.pointerId); canvas.className = 'grabbing'; }
+    updateBackBtn(); draw();
+  });
+  canvas.addEventListener('pointermove', e => {
+    const w = pointerWorld(e);
+    const inIce = inside(w[0], w[1]);
+    hover = inIce ? [Math.floor(w[0]), Math.floor(w[1])] : null;
+    updateReadout(inIce ? w : null);
+    if (drag && typeof drag === 'object') {
+      nextFrameVia(drag.id)[drag.via] = snapCell(w[0], w[1]);
+      syncScript();
+    } else if (drag) {
+      const F = frames[cur];
+      const cell = snapCell(w[0], w[1]);
+      if (drag === 'P') {
+        let holder = null;
+        for (const id of ALL) { const p = cellW(F.pos[id]); if (Math.hypot(p[0] - w[0], p[1] - w[1]) < TOKEN_R + 0.3) { holder = id; break; } }
+        F.puck = holder ? { holder } : { at: cell };
+      } else {
+        F.pos[drag] = cell;
+      }
+      syncScript();
+    } else if (!playing) {
+      canvas.className = hitVia(w) >= 0 || hit(w) ? 'grab' : '';
+    }
+    draw();
+  });
+  const endDrag = () => { if (drag) { drag = null; canvas.className = ''; changed(); } };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  canvas.addEventListener('pointerleave', () => { hover = null; updateReadout(null); draw(); });
+
+  // ---------- Playback ----------
+  const $ = id => document.getElementById(id);
+  const speedEl = $('speed');
+  const frameDur = () => 1300 / parseFloat(speedEl.value);
+  function togglePlay() {
+    if (playing) { playing = false; t = 0; refreshUI(); draw(); return; }
+    if (frames.length < 2) return;
+    if (cur >= frames.length - 1) cur = 0;
+    playing = true; t = 0; lastTs = performance.now(); selected = null;
+    refreshUI(); requestAnimationFrame(tick);
+  }
+  function tick(now) {
+    if (!playing) return;
+    t += (now - lastTs) / frameDur(); lastTs = now;
+    if (t >= 1) {
+      cur++; t = 0;
+      if (cur >= frames.length - 1) { playing = false; refreshUI(); draw(); return; }
+      refreshUI();
+    }
+    draw();
+    requestAnimationFrame(tick);
+  }
+  function step(d) {
+    playing = false; t = 0;
+    cur = Math.max(0, Math.min(frames.length - 1, cur + d));
+    refreshUI(); draw();
+  }
+
+  // ---------- Frames bar ----------
+  const framesEl = $('frames');
+  // scroll only the strip, never the page, so the active frame stays in view
+  function keepInStrip(el) {
+    const pad = 24, l = el.offsetLeft - framesEl.offsetLeft, r = l + el.offsetWidth;
+    let x = framesEl.scrollLeft;
+    if (l - pad < x) x = l - pad;
+    else if (r + pad > x + framesEl.clientWidth) x = r + pad - framesEl.clientWidth;
+    x = Math.max(0, x);
+    if (Math.abs(x - framesEl.scrollLeft) > 1) {
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      framesEl.scrollTo({ left: x, behavior: playing || reduce ? 'auto' : 'smooth' });
+    }
+  }
+  // soft fades at the edges that only appear when there are more frames that way
+  function updateFades() {
+    // the scrollbar sits under the buttons; pad the top by the same amount so they stay centred
+    // (0 on phones, where scrollbars overlay the content)
+    framesEl.style.setProperty('--sb', (framesEl.offsetHeight - framesEl.clientHeight) + 'px');
+    const max = framesEl.scrollWidth - framesEl.clientWidth;
+    framesEl.classList.toggle('fade-l', framesEl.scrollLeft > 2);
+    framesEl.classList.toggle('fade-r', framesEl.scrollLeft < max - 2);
+  }
+  let scrollTimer;
+  document.querySelectorAll('.scroll-subtle').forEach(el => el.addEventListener('scroll', () => {
+    el.classList.add('is-scrolling');
+    clearTimeout(el._st); el._st = setTimeout(() => el.classList.remove('is-scrolling'), 700);
+  }, { passive: true }));
+  framesEl.addEventListener('scroll', updateFades, { passive: true });
+  // a normal mouse wheel scrolls the strip sideways
+  framesEl.addEventListener('wheel', e => {
+    if (framesEl.scrollWidth <= framesEl.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+    framesEl.scrollLeft += e.deltaY;
+    e.preventDefault();
+  }, { passive: false });
+  new ResizeObserver(updateFades).observe(framesEl);
+  function renderFrames() {
+    framesEl.innerHTML = '';
+    frames.forEach((f, i) => {
+      if (renaming && i === cur) {
+        const inp = document.createElement('input');
+        inp.type = 'text'; inp.className = 'frame-edit'; inp.id = 'frameEdit'; inp.value = f.name;
+        inp.setAttribute('aria-label', 'Frame name');
+        const commit = () => {
+          if (!renaming) return;
+          renaming = false;
+          frames[cur].name = inp.value.trim() || ('Frame ' + (cur + 1));
+          changed();
+        };
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); commit(); }
+          if (e.key === 'Escape') { e.preventDefault(); renaming = false; refreshUI(); }
+        });
+        inp.addEventListener('blur', commit);
+        framesEl.appendChild(inp);
+        requestAnimationFrame(() => { inp.focus(); inp.select(); });
+        return;
+      }
+      const b = document.createElement('button');
+      b.className = 'frame-btn'; b.setAttribute('role', 'tab');
+      b.setAttribute('aria-current', i === cur ? 'true' : 'false');
+      const n = document.createElement('span'); n.className = 'n'; n.textContent = i + 1;
+      const name = document.createElement('span'); name.textContent = f.name;
+      b.append(n, name);
+      b.addEventListener('click', () => { playing = false; t = 0; cur = i; refreshUI(); draw(); });
+      b.addEventListener('dblclick', () => { cur = i; startRename(); });
+      framesEl.appendChild(b);
+    });
+    const active = framesEl.children[cur];
+    if (active) keepInStrip(active);
+    updateFades();
+  }
+  function updateBackBtn() {
+    const btn = $('backBtn');
+    const show = !!selected && selected !== 'P' && cur < frames.length - 1 && !playing;
+    btn.hidden = !show;
+    $('viaBtn').hidden = !show;
+    if (show) btn.setAttribute('aria-pressed', String(isBack(frames[cur + 1], selected)));
+  }
+  function toggleBack() {
+    if (!selected || selected === 'P' || cur >= frames.length - 1) return;
+    const F = frames[cur + 1];   // the move out of this frame is stored on the next one
+    if (!Array.isArray(F.back)) F.back = [];
+    F.back = F.back.includes(selected) ? F.back.filter(x => x !== selected) : [...F.back, selected];
+    changed();
+  }
+  let boardToastTimer;
+  function flashBoard(msg) {
+    const el = $('boardToast'), bf = $('bottomFloat');
+    el.textContent = msg; el.style.bottom = (bf.offsetHeight + 22) + 'px'; el.hidden = false;
+    clearTimeout(boardToastTimer); boardToastTimer = setTimeout(() => el.hidden = true, 2200);
+  }
+  function startRename() { playing = false; renaming = true; refreshUI(); draw(); }
+
+  function refreshUI() {
+    renderFrames();
+    $('playTxt').textContent = playing ? 'Pause' : 'Play';
+    $('playIcon').innerHTML = playing ? '<path d="M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z"/>' : '<path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"/>';
+    $('prevBtn').disabled = cur === 0;
+    $('nextBtn').disabled = cur >= frames.length - 1;
+    $('delBtn').disabled = frames.length < 2;
+    updateBackBtn();
+  }
+
+  // ---------- Cell label ----------
+  function updateReadout(w) {
+    const el = $('cellPos');
+    if (!w) { el.hidden = true; return; }
+    el.textContent = `${Math.floor(w[0])},${Math.floor(w[1])}`;
+    el.hidden = false;
+  }
+  // ---------- Script drawer ----------
+  const appEl = $('app'), scriptEl = $('script'), statusEl = $('scriptStatus'), errorsEl = $('errors');
+  function setDrawer(open) {
+    appEl.classList.toggle('drawer-open', open);
+    $('scriptToggle').setAttribute('aria-pressed', String(open));
+    $('drawer').inert = !open;
+    if (open) syncScript();
+  }
+  const drawerOpen = () => appEl.classList.contains('drawer-open');
+  $('scriptToggle').addEventListener('click', () => setDrawer(!drawerOpen()));
+  $('drawerClose').addEventListener('click', () => setDrawer(false));
+  $('scrim').addEventListener('click', () => setDrawer(false));
+  // the stage resizes while the drawer animates; ResizeObserver keeps the rink fitted
+
+  function syncScript(force) {
+    if (scriptDirty && !force) return;
+    scriptEl.value = toScript(frames);
+    scriptDirty = false; errorsEl.innerHTML = '';
+    statusEl.textContent = ''; statusEl.className = 'status';
+  }
+  function changed() { save(); syncScript(); refreshUI(); draw(); }
+
+  scriptEl.addEventListener('input', () => {
+    scriptDirty = true;
+    statusEl.textContent = 'edited · apply to update the board'; statusEl.className = 'status dirty';
+  });
+  $('applyBtn').addEventListener('click', () => {
+    const { frames: f, errors } = parse(scriptEl.value);
+    errorsEl.innerHTML = '';
+    if (errors.length) {
+      errors.forEach(msg => { const li = document.createElement('li'); li.textContent = msg; errorsEl.appendChild(li); });
+      return;
+    }
+    frames = f; cur = Math.min(cur, frames.length - 1); playing = false; selected = null;
+    scriptDirty = false; save(); syncScript(true); refreshUI(); draw();
+    flash('Board updated');
+  });
+  $('revertBtn').addEventListener('click', () => syncScript(true));
+  $('copyBtn').addEventListener('click', () => {
+    const txt = scriptEl.value;
+    const fallback = () => { scriptEl.select(); flash('Selected. Press Ctrl/Cmd+C'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => flash('Copied'), fallback);
+    else fallback();
+  });
+  let toastTimer;
+  function flash(msg) { const el = $('toast'); el.textContent = msg; clearTimeout(toastTimer); toastTimer = setTimeout(() => el.textContent = '', 2200); }
+
+  // ---------- Menu and help ----------
+  const menuEl = $('menu'), menuBtn = $('menuBtn');
+  function setMenu(open) { menuEl.hidden = !open; menuBtn.setAttribute('aria-expanded', String(open)); if (open) menuEl.querySelector('button').focus(); }
+  menuBtn.addEventListener('click', e => { e.stopPropagation(); setMenu(menuEl.hidden); });
+  document.addEventListener('click', e => { if (!menuEl.hidden && !menuEl.contains(e.target)) setMenu(false); });
+  function setHelp(open) { $('help').hidden = !open; if (open) $('helpClose').focus(); }
+  $('helpBtn').addEventListener('click', () => { setMenu(false); setHelp(true); });
+  $('helpClose').addEventListener('click', () => setHelp(false));
+  $('help').addEventListener('click', e => { if (e.target.id === 'help') setHelp(false); });
+  $('sampleBtn').addEventListener('click', () => {
+    setMenu(false);
+    frames = parse(SAMPLE).frames; cur = 0; selected = null; playing = false; syncScript(true); changed();
+  });
+  $('faceoffBtn').addEventListener('click', () => {
+    setMenu(false);
+    frames = [{ name: 'Faceoff', pos: clone(FACEOFF), puck: { at: [29, 14] } }];
+    cur = 0; selected = null; playing = false; syncScript(true); changed();
+  });
+
+  // ---------- Transport buttons ----------
+  $('playBtn').addEventListener('click', togglePlay);
+  $('prevBtn').addEventListener('click', () => step(-1));
+  $('nextBtn').addEventListener('click', () => step(1));
+  $('addBtn').addEventListener('click', () => {
+    playing = false;
+    const copy = clone(frames[cur]); copy.name = 'Frame ' + (frames.length + 1); copy.back = []; copy.via = {};
+    if (copy.puck.shot) delete copy.puck.shot;
+    frames.splice(cur + 1, 0, copy); cur++;
+    changed();
+  });
+  $('renameBtn').addEventListener('click', startRename);
+  $('backBtn').addEventListener('click', toggleBack);
+  $('viaBtn').addEventListener('click', addViaMid);
+  $('delBtn').addEventListener('click', () => {
+    if (frames.length < 2) return;
+    frames.splice(cur, 1); cur = Math.max(0, cur - 1); changed();
+  });
+
+  // ---------- Keyboard ----------
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (!$('help').hidden) { setHelp(false); return; }
+      if (!menuEl.hidden) { setMenu(false); menuBtn.focus(); return; }
+      if (drawerOpen() && e.target !== scriptEl) { setDrawer(false); return; }
+    }
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'textarea' || tag === 'input' || tag === 'select') return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === ' ') { e.preventDefault(); togglePlay(); return; }
+    if (e.key === ',') { step(-1); return; }
+    if (e.key === '.') { step(1); return; }
+    if (e.key === 's' || e.key === 'S') { setDrawer(!drawerOpen()); return; }
+    if (e.key === 'b' || e.key === 'B') { toggleBack(); return; }
+    if (e.key === 'w' || e.key === 'W') { addViaMid(); return; }
+    const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key];
+    if (d && selected && !playing) {
+      e.preventDefault();
+      const F = frames[cur];
+      const curCell = selected === 'P' ? (F.puck.at || F.pos[F.puck.holder]) : F.pos[selected];
+      const nx = curCell[0] + d[0], ny = curCell[1] + d[1];
+      if (!validCell(nx, ny)) return;
+      if (selected === 'P') F.puck = { at: [nx, ny] }; else F.pos[selected] = [nx, ny];
+      changed();
+    }
+  });
+
+  // ---------- Theme and sizing ----------
+  const mq = matchMedia('(prefers-color-scheme: dark)');
+  const retheme = () => { readColors(); draw(); };
+  mq.addEventListener ? mq.addEventListener('change', retheme) : mq.addListener(retheme);
+  new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  const ro = new ResizeObserver(resize); ro.observe(stageEl); ro.observe(document.getElementById('bottomFloat'));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+
+  readColors(); setDrawer(false); syncScript(true); refreshUI(); resize();
+})();
+</script>
+
+</body>
+</html>
