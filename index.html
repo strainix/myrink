@@ -46,6 +46,12 @@
   --font-body: "Barlow", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   color-scheme: light;
+  /* motion */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --t-fast: 140ms;
+  --t-med: 220ms;
+  --t-slow: 280ms;
 }
 
 * { box-sizing: border-box; }
@@ -76,7 +82,7 @@ body {
   grid-template-columns: minmax(0, 1fr) 0;
   grid-template-rows: minmax(0, 100%);
   overflow: hidden;
-  transition: grid-template-columns 0.22s ease;
+  transition: grid-template-columns var(--t-slow) var(--ease);
 }
 .app.drawer-open { grid-template-columns: minmax(0, 1fr) min(440px, 40vw); }
 @media (max-width: 899px) { .app.drawer-open { grid-template-columns: minmax(0, 1fr) 0; } }
@@ -218,15 +224,16 @@ select, input[type="text"], input[type="number"] {
 @media (max-width: 899px) {
   .drawer {
     position: fixed; inset: 0 0 0 auto; width: min(440px, 100vw); z-index: 40;
-    transform: translateX(100%); transition: transform 0.22s ease; box-shadow: var(--shadow);
+    transform: translateX(100%); transition: transform var(--t-slow) var(--ease); box-shadow: var(--shadow);
     padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .app.drawer-open .drawer { transform: none; }
   .drawer-inner { width: 100%; }
 }
 .scrim { display: none; }
+@media (max-width: 899px) { .scrim { display: block; position: fixed; inset: 0; background: var(--scrim); z-index: 35; opacity: 0; pointer-events: none; transition: opacity var(--t-slow) var(--ease); } }
 @media (max-width: 899px) {
-  .app.drawer-open .scrim { display: block; position: fixed; inset: 0; background: var(--scrim); z-index: 35; }
+  .app.drawer-open .scrim { opacity: 1; pointer-events: auto; }
 }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 h2 { font: 700 1.2rem/1 var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; margin: 0; }
@@ -329,7 +336,47 @@ kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-
 .app.side .top-float .legend { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; padding: 10px 12px; }
 @media (max-height: 560px) { .app.side .top-float .legend { display: none; } }
 
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ---------- Motion (UI only; the rink canvas is never animated by CSS) ---------- */
+.btn, .frame-btn, .lineup-chip, .lib-cat, .lib-row, .menu button, .lib-item {
+  transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease),
+              color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.btn:active:not(:disabled), .frame-btn:active, .lineup-chip:active, .lib-cat:active, .menu button:active { transform: scale(0.96); }
+.lib-row:active { transform: scale(0.99); }
+
+/* panels: the backdrop fades, the dialog lifts in */
+.modal-back { opacity: 0; transition: opacity var(--t-med) var(--ease); }
+.modal-back.is-open { opacity: 1; }
+.modal-back .modal { opacity: 0; transform: translateY(10px) scale(0.98); transition: opacity var(--t-med) var(--ease), transform var(--t-slow) var(--ease); }
+.modal-back.is-open .modal { opacity: 1; transform: none; }
+
+/* menu: grows from the button */
+.menu { opacity: 0; transform: translateY(-4px) scale(0.97); transform-origin: top right; transition: opacity var(--t-fast) var(--ease), transform var(--t-med) var(--ease); }
+.menu.is-open { opacity: 1; transform: none; }
+
+/* toast: slides up */
+.board-toast { opacity: 0; transform: translateX(-50%) translateY(8px); transition: opacity var(--t-med) var(--ease), transform var(--t-med) var(--ease); }
+.board-toast.is-open { opacity: 1; transform: translateX(-50%); }
+
+/* things that appear */
+@keyframes pop-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes icon-swap { from { opacity: 0; transform: scale(0.6) rotate(-20deg); } to { opacity: 1; transform: none; } }
+#backBtn:not([hidden]), #viaBtn:not([hidden]) { animation: pop-in var(--t-med) var(--ease); }
+.frame-btn.is-new, .frame-edit { animation: pop-in var(--t-med) var(--ease); }
+#playIcon.swap { animation: icon-swap var(--t-med) var(--ease); }
+.lib-detail { animation: rise-in var(--t-med) var(--ease); }
+.lib-list.stagger .lib-item { animation: rise-in var(--t-slow) var(--ease) both; animation-delay: calc(var(--i, 0) * 30ms); }
+.lib-state { animation: rise-in var(--t-med) var(--ease); }
+
+/* layout switch: the floating bars glide to their new place, the rink just swaps */
+.bottom-float { view-transition-name: mr-bar; }
+.top-actions { view-transition-name: mr-actions; }
+.top-float .legend { view-transition-name: mr-legend; }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-group(mr-bar), ::view-transition-group(mr-actions), ::view-transition-group(mr-legend) { animation-duration: var(--t-slow); animation-timing-function: var(--ease); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } ::view-transition-group(*) { animation: none !important; } }
 </style>
 <style>
   /* base reset (supplied by the artifact host when hosted on claude.ai) */
@@ -785,6 +832,7 @@ puck 54,15 shot
   let drag = null;
   let scriptDirty = false;
   let renaming = false;
+  let newFrameIndex = -1;
 
   function load() {
     try {
@@ -801,7 +849,7 @@ puck 54,15 shot
   const ctx = canvas.getContext('2d');
   const stageEl = document.getElementById('stage');
   const PAD = { l: 26, r: 6, t: 6, b: 22 };
-  let s = 10, cssW = 600, cssH = 320;
+  let s = 10, cssW = 600, cssH = 320, layoutReady = false;
   const C = {};
   function readColors() {
     const cs = getComputedStyle(document.documentElement);
@@ -822,7 +870,13 @@ puck 54,15 shot
     const barH = Math.min(1100, sw - 32) >= 900 ? 49 : 90;               // bottom bar: one row or two
     const sBottom = Math.min((sw - 32 - 32) / 60, (sh - 68 - barH - 40 - 28) / 30);
     const side = sw >= 560 && (wasSide ? sSide >= sBottom * 0.9 : sSide > sBottom * 1.1);
-    if (appEl.classList.contains('side') !== side) appEl.classList.toggle('side', side);
+    if (wasSide !== side) {
+      if (layoutReady && document.startViewTransition && !reducedMotion()) {
+        document.startViewTransition(() => { appEl.classList.toggle('side', side); resize(); });
+        return;
+      }
+      appEl.classList.toggle('side', side);
+    }
     stageEl.style.padding = '';
     if (side) {
       const lw = bf.offsetWidth, rw = tf.querySelector('.top-actions').offsetWidth;
@@ -1435,6 +1489,8 @@ puck 54,15 shot
       b.addEventListener('dblclick', () => { cur = i; startRename(); });
       framesEl.appendChild(b);
     });
+    if (newFrameIndex >= 0 && framesEl.children[newFrameIndex]) framesEl.children[newFrameIndex].classList.add('is-new');
+    newFrameIndex = -1;
     const active = framesEl.children[cur];
     if (active) keepInStrip(active);
     updateFades();
@@ -1456,19 +1512,36 @@ puck 54,15 shot
     F.back = F.back.includes(selected) ? F.back.filter(x => x !== selected) : [...F.back, selected];
     changed();
   }
+  // show/hide with a CSS transition: add .is-open after the element is visible, wait for the exit before hiding
+  const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function animShow(el, open, delay = 240) {
+    clearTimeout(el._hideT);
+    if (open) {
+      el.hidden = false;
+      void el.offsetWidth;                 // start the transition from the closed state
+      el.classList.add('is-open');
+    } else {
+      el.classList.remove('is-open');
+      el._hideT = setTimeout(() => { el.hidden = true; }, reducedMotion() ? 0 : delay);
+    }
+  }
+  const isOpen = el => el.classList.contains('is-open');
   let boardToastTimer;
   function flashBoard(msg) {
     const el = $('boardToast'), bf = $('bottomFloat');
     const side = $('app').classList.contains('side');
-    el.textContent = msg; el.style.bottom = side ? '18px' : (bf.offsetHeight + 22) + 'px'; el.hidden = false;
-    clearTimeout(boardToastTimer); boardToastTimer = setTimeout(() => el.hidden = true, 2200);
+    el.textContent = msg; el.style.bottom = side ? '18px' : (bf.offsetHeight + 22) + 'px';
+    animShow(el, true);
+    clearTimeout(boardToastTimer); boardToastTimer = setTimeout(() => animShow(el, false), 2200);
   }
   function startRename() { playing = false; renaming = true; refreshUI(); draw(); }
 
   function refreshUI() {
     renderFrames();
     $('playTxt').textContent = playing ? 'Pause' : 'Play';
-    $('playIcon').innerHTML = playing ? '<path d="M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z"/>' : '<path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"/>';
+    const icon = $('playIcon');
+    if (icon.dataset.state !== String(playing)) { icon.dataset.state = String(playing); icon.classList.remove('swap'); void icon.getBoundingClientRect(); icon.classList.add('swap'); }
+    icon.innerHTML = playing ? '<path d="M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z"/>' : '<path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"/>';
     $('prevBtn').disabled = cur === 0;
     $('nextBtn').disabled = cur >= frames.length - 1;
     $('delBtn').disabled = frames.length < 2;
@@ -1531,10 +1604,10 @@ puck 54,15 shot
 
   // ---------- Menu and help ----------
   const menuEl = $('menu'), menuBtn = $('menuBtn');
-  function setMenu(open) { menuEl.hidden = !open; menuBtn.setAttribute('aria-expanded', String(open)); if (open) menuEl.querySelector('button').focus(); }
-  menuBtn.addEventListener('click', e => { e.stopPropagation(); setMenu(menuEl.hidden); });
-  document.addEventListener('click', e => { if (!menuEl.hidden && !menuEl.contains(e.target)) setMenu(false); });
-  function setHelp(open) { $('help').hidden = !open; if (open) $('helpClose').focus(); }
+  function setMenu(open) { animShow(menuEl, open, 180); menuBtn.setAttribute('aria-expanded', String(open)); if (open) menuEl.querySelector('button').focus(); }
+  menuBtn.addEventListener('click', e => { e.stopPropagation(); setMenu(!isOpen(menuEl)); });
+  document.addEventListener('click', e => { if (isOpen(menuEl) && !menuEl.contains(e.target)) setMenu(false); });
+  function setHelp(open) { animShow($('help'), open); if (open) $('helpClose').focus(); }
   $('helpBtn').addEventListener('click', () => { setMenu(false); setHelp(true); });
   $('helpClose').addEventListener('click', () => setHelp(false));
   $('help').addEventListener('click', e => { if (e.target.id === 'help') setHelp(false); });
@@ -1573,7 +1646,7 @@ puck 54,15 shot
   // ---------- Library ----------
   // Plays live in a GitHub repo: library.json lists categories and plays, each play is a script file.
   const LIBRARY_BASE = window.MYRINK_LIBRARY_BASE || 'https://raw.githubusercontent.com/strainix/myrink/main/library/';
-  let library = null, libCat = null, libOpenId = null, libLoading = false;
+  let library = null, libCat = null, libOpenId = null, libLoading = false, libStagger = false;
   const libEl = $('libBody'), libCatsEl = $('libCats');
   function esc(t) { return String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
   function libState(html, error) { libCatsEl.innerHTML = ''; libEl.innerHTML = `<div class="lib-state${error ? ' error' : ''}">${html}</div>`; }
@@ -1611,8 +1684,8 @@ puck 54,15 shot
     if (!cat) { libState('The library is empty for now.'); return; }
     const plays = library.plays.filter(p => p.category === cat.id);
     libEl.innerHTML = `${used.length === 1 ? `<p class="lib-desc"><b>${esc(cat.title)}</b> · ${esc(cat.description || '')}</p>` : `<p class="lib-desc">${esc(cat.description || '')}</p>`}
-      <ul class="lib-list">${plays.map(p => `
-        <li class="lib-item" data-open="${p.id === libOpenId}">
+      <ul class="lib-list${libStagger ? ' stagger' : ''}">${plays.map((p, i) => `
+        <li class="lib-item" style="--i:${i}" data-open="${p.id === libOpenId}">
           <button class="lib-row" data-id="${esc(p.id)}" aria-expanded="${p.id === libOpenId}">
             <span class="lib-title">${esc(p.title)}</span>
             ${p.strength ? `<span class="lib-strength">${esc(p.strength)}</span>` : '<span></span>'}
@@ -1625,6 +1698,7 @@ puck 54,15 shot
         </li>`).join('')}
       </ul>
       <p class="lib-note">Opening a play replaces the one on the board.</p>`;
+    libStagger = false;
     libEl.querySelectorAll('.lib-row').forEach(b => b.addEventListener('click', () => { libOpenId = libOpenId === b.dataset.id ? null : b.dataset.id; renderLibrary(); }));
     libEl.querySelectorAll('[data-open]').forEach(b => { if (b.tagName === 'BUTTON') b.addEventListener('click', () => openLibraryPlay(b.dataset.open, b)); });
   }
@@ -1646,7 +1720,7 @@ puck 54,15 shot
       flashBoard(`Couldn't open “${play.title}”: ${e.message || e}`);
     }
   }
-  function setLibrary(open) { $('library').hidden = !open; if (open) { loadLibrary(false); $('libraryClose').focus(); } }
+  function setLibrary(open) { animShow($('library'), open); if (open) { libStagger = true; loadLibrary(false); $('libraryClose').focus(); } }
   $('libraryBtn').addEventListener('click', () => { setMenu(false); setLibrary(true); });
   $('libraryClose').addEventListener('click', () => setLibrary(false));
   $('library').addEventListener('click', e => { if (e.target.id === 'library') setLibrary(false); });
@@ -1701,7 +1775,7 @@ puck 54,15 shot
     $('lineupCount').textContent = `Skaters: home ${n(HOME)}${g(HOME)} · away ${n(AWAY)}${g(AWAY)}`;
     $('lineupNote').textContent = `Changes apply from frame ${cur + 1} (${F.name}) to the end. Numbered players have no fixed position.`;
   }
-  function setLineup(open) { $('lineup').hidden = !open; if (open) { renderLineup(); $('lineupClose').focus(); } }
+  function setLineup(open) { animShow($('lineup'), open); if (open) { renderLineup(); $('lineupClose').focus(); } }
   $('lineupBtn').addEventListener('click', () => { setMenu(false); setLineup(true); });
   $('lineupClose').addEventListener('click', () => setLineup(false));
   $('lineup').addEventListener('click', e => { if (e.target.id === 'lineup') setLineup(false); });
@@ -1721,6 +1795,7 @@ puck 54,15 shot
     const copy = clone(frames[cur]); copy.name = 'Frame ' + (frames.length + 1); copy.back = []; copy.via = {}; copy.puckVia = [];
     if (copy.puck.shot) delete copy.puck.shot;
     frames.splice(cur + 1, 0, copy); cur++;
+    newFrameIndex = cur;
     changed();
   });
   $('renameBtn').addEventListener('click', startRename);
@@ -1734,10 +1809,10 @@ puck 54,15 shot
   // ---------- Keyboard ----------
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      if (!$('help').hidden) { setHelp(false); return; }
-      if (!$('lineup').hidden) { setLineup(false); return; }
-      if (!$('library').hidden) { setLibrary(false); return; }
-      if (!menuEl.hidden) { setMenu(false); menuBtn.focus(); return; }
+      if (isOpen($('help'))) { setHelp(false); return; }
+      if (isOpen($('lineup'))) { setLineup(false); return; }
+      if (isOpen($('library'))) { setLibrary(false); return; }
+      if (isOpen(menuEl)) { setMenu(false); menuBtn.focus(); return; }
       if (drawerOpen() && e.target !== scriptEl) { setDrawer(false); return; }
     }
     const tag = (e.target.tagName || '').toLowerCase();
@@ -1772,6 +1847,7 @@ puck 54,15 shot
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
 
   readColors(); setDrawer(false); syncScript(true); refreshUI(); resize();
+  requestAnimationFrame(() => { layoutReady = true; });
 })();
 </script>
 
@@ -1802,7 +1878,7 @@ puck 54,15 shot
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; btn.hidden = false; });
   window.addEventListener('appinstalled', () => { deferred = null; btn.hidden = true; });
 
-  const closeMenu = () => { menu.hidden = true; menuBtn.setAttribute('aria-expanded', 'false'); };
+  const closeMenu = () => { menu.classList.remove('is-open'); setTimeout(() => { menu.hidden = true; }, 180); menuBtn.setAttribute('aria-expanded', 'false'); };
   btn.addEventListener('click', async () => {
     closeMenu();
     if (deferred) {
@@ -1810,13 +1886,13 @@ puck 54,15 shot
       await deferred.userChoice.catch(() => null);
       deferred = null; btn.hidden = true;
     } else {
-      help.hidden = false;
+      help.hidden = false; void help.offsetWidth; help.classList.add('is-open');
     }
   });
-  const hideHelp = () => { help.hidden = true; };
+  const hideHelp = () => { help.classList.remove('is-open'); setTimeout(() => { help.hidden = true; }, 240); };
   document.getElementById('installClose').addEventListener('click', hideHelp);
   help.addEventListener('click', e => { if (e.target === help) hideHelp(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !help.hidden) hideHelp(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && help.classList.contains('is-open')) hideHelp(); });
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
