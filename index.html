@@ -257,6 +257,45 @@ details.syntax b { color: var(--fg); font-weight: 500; }
 .modal .legend-list .ico { width: 44px; }
 kbd { font: 12px var(--font-mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; color: var(--fg); }
 
+.app:not(.drawer-open) .drawer { border-left-color: transparent; }
+
+/* ---------- Side layout: wide but short screens ----------
+   Controls become a slim rail on the left, the top actions a narrow column on the right. */
+.app.side .bottom-float {
+  left: 12px; top: 12px; bottom: auto; transform: none;
+  width: 176px; max-height: calc(100% - 24px - env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column;
+}
+.app.side .transport {
+  display: flex; flex-direction: column; align-items: stretch;
+  flex: 1 1 auto; min-height: 0; gap: 8px; padding: 8px;
+}
+.app.side .play-group { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.app.side .play-group select { grid-column: 1 / -1; width: 100%; }
+.app.side .play-group .btn, .app.side .edit-group .btn { justify-content: center; padding-inline: 0; }
+.app.side #playTxt { display: none; }
+.app.side .transport .frames {
+  flex-direction: column; flex: 0 1 auto; min-height: 0;
+  overflow-x: hidden; overflow-y: auto; padding: 2px; margin: 0;
+  touch-action: pan-y; overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-t, 0px), #000 calc(100% - var(--fade-b, 0px)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-t, 0px), #000 calc(100% - var(--fade-b, 0px)), transparent 100%);
+}
+.app.side .frames.fade-t { --fade-t: 18px; }
+.app.side .frames.fade-b { --fade-b: 18px; }
+.app.side .frame-btn { width: 100%; min-width: 0; }
+.app.side .frame-btn > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.app.side .frame-edit { width: 100%; }
+.app.side .edit-group { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; justify-self: auto; }
+
+.app.side .top-float { left: auto; right: 12px; top: 12px; bottom: 12px; flex-direction: column; align-items: flex-end; justify-content: flex-start; gap: 10px; }
+.app.side .top-actions { order: -1; flex-direction: column; margin-left: 0; }
+.app.side .top-actions .lbl { display: none; }
+.app.side .top-actions .btn { justify-content: center; }
+.app.side .menu { right: calc(100% + 8px); top: 0; }
+.app.side .top-float .legend { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; padding: 10px 12px; }
+@media (max-height: 560px) { .app.side .top-float .legend { display: none; } }
+
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 <style>
@@ -654,10 +693,26 @@ puck 54,15 shot
   }
   function resize() {
     const bf = document.getElementById('bottomFloat');
-    stageEl.style.paddingBottom = (bf.offsetHeight + 40) + 'px';
+    const tf = document.querySelector('.top-float');
     const cp = document.getElementById('cellPos');
-    cp.style.bottom = (bf.offsetHeight + 18) + 'px';
-    cp.style.right = Math.max(16, (stageEl.clientWidth - bf.offsetWidth) / 2 + 6) + 'px';
+    const appEl = document.getElementById('app');
+    // wide and short: move the floating bars to the sides
+    const sw = stageEl.clientWidth, sh = stageEl.clientHeight;
+    const side = sw >= 640 && sh < 760 && sw / sh >= 2.1;
+    if (appEl.classList.contains('side') !== side) appEl.classList.toggle('side', side);
+    stageEl.style.padding = '';
+    if (side) {
+      const lw = bf.offsetWidth, rw = tf.querySelector('.top-actions').offsetWidth;
+      const legend = tf.querySelector('.legend'), legW = legend && legend.offsetParent ? legend.offsetWidth : 0;
+      const right = Math.max(rw, legW);
+      stageEl.style.padding = `12px ${right + 24}px 12px ${lw + 24}px`;
+      cp.style.bottom = '14px';
+      cp.style.right = (right + 30) + 'px';
+    } else {
+      stageEl.style.paddingBottom = (bf.offsetHeight + 40) + 'px';
+      cp.style.bottom = (bf.offsetHeight + 18) + 'px';
+      cp.style.right = Math.max(16, (sw - bf.offsetWidth) / 2 + 6) + 'px';
+    }
     const st = getComputedStyle(stageEl);
     const availW = stageEl.clientWidth - parseFloat(st.paddingLeft) - parseFloat(st.paddingRight);
     const availH = stageEl.clientHeight - parseFloat(st.paddingTop) - parseFloat(st.paddingBottom);
@@ -1125,7 +1180,20 @@ puck 54,15 shot
   // ---------- Frames bar ----------
   const framesEl = $('frames');
   // scroll only the strip, never the page, so the active frame stays in view
+  const vertical = () => document.getElementById('app').classList.contains('side');
   function keepInStrip(el) {
+    if (vertical()) {
+      const pad = 20, t = el.offsetTop - framesEl.offsetTop, b = t + el.offsetHeight;
+      let y = framesEl.scrollTop;
+      if (t - pad < y) y = t - pad;
+      else if (b + pad > y + framesEl.clientHeight) y = b + pad - framesEl.clientHeight;
+      y = Math.max(0, y);
+      if (Math.abs(y - framesEl.scrollTop) > 1) {
+        const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        framesEl.scrollTo({ top: y, behavior: playing || reduce ? 'auto' : 'smooth' });
+      }
+      return;
+    }
     const pad = 24, l = el.offsetLeft - framesEl.offsetLeft, r = l + el.offsetWidth;
     let x = framesEl.scrollLeft;
     if (l - pad < x) x = l - pad;
@@ -1140,10 +1208,13 @@ puck 54,15 shot
   function updateFades() {
     // the scrollbar sits under the buttons; pad the top by the same amount so they stay centred
     // (0 on phones, where scrollbars overlay the content)
-    framesEl.style.setProperty('--sb', (framesEl.offsetHeight - framesEl.clientHeight) + 'px');
+    framesEl.style.setProperty('--sb', vertical() ? '0px' : (framesEl.offsetHeight - framesEl.clientHeight) + 'px');
     const max = framesEl.scrollWidth - framesEl.clientWidth;
     framesEl.classList.toggle('fade-l', framesEl.scrollLeft > 2);
     framesEl.classList.toggle('fade-r', framesEl.scrollLeft < max - 2);
+    const maxY = framesEl.scrollHeight - framesEl.clientHeight;
+    framesEl.classList.toggle('fade-t', framesEl.scrollTop > 2);
+    framesEl.classList.toggle('fade-b', framesEl.scrollTop < maxY - 2);
   }
   let scrollTimer;
   document.querySelectorAll('.scroll-subtle').forEach(el => el.addEventListener('scroll', () => {
@@ -1351,7 +1422,7 @@ puck 54,15 shot
   const retheme = () => { readColors(); draw(); };
   mq.addEventListener ? mq.addEventListener('change', retheme) : mq.addListener(retheme);
   new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-  const ro = new ResizeObserver(resize); ro.observe(stageEl); ro.observe(document.getElementById('bottomFloat'));
+  const ro = new ResizeObserver(resize); ro.observe(stageEl); ro.observe(document.getElementById('bottomFloat')); ro.observe(document.querySelector('.top-float'));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
 
   readColors(); setDrawer(false); syncScript(true); refreshUI(); resize();
